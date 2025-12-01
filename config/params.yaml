@@ -12,6 +12,7 @@ features:
 
 cv:
   method: expanding
+  n_folds: 5            # Number of CV folds
   fold_length_days: 42  # 6 weeks
   min_train_days: 365   # 1 year minimum
 
