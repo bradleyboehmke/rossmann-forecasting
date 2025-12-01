@@ -1,0 +1,42 @@
+# Python virtual environment
+venv/
+.venv/
+env_local/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints/
+
+# Environment variables
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# macOS
+.DS_Store
+
+# Data (optional - uncomment if data files are large)
+# data/raw/*.csv
+# data/processed/*.parquet
+
+# Model artifacts (optional - can be large)
+# models/**/*.pkl
+# models/**/*.joblib
+# models/**/*.h5
+
+# Output files (optional - if you want to regenerate)
+# outputs/figures/*.png
+# outputs/predictions/*.csv

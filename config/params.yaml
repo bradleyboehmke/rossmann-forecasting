@@ -1,0 +1,22 @@
+# Rossmann Forecasting Configuration
+
+data:
+  raw_path: data/raw
+  processed_path: data/processed
+
+features:
+  lags: [1, 7, 14, 28]
+  rolling_windows: [7, 14, 28, 60]
+  include_promo_features: true
+  include_competition_features: true
+
+cv:
+  method: expanding
+  fold_length_days: 42  # 6 weeks
+  min_train_days: 365   # 1 year minimum
+
+models:
+  baseline_lightgbm: {}
+  advanced_lightgbm: {}
+  advanced_xgboost: {}
+  advanced_catboost: {}
