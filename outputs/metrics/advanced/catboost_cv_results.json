@@ -1,0 +1,128 @@
+{
+  "model_name": "CatBoost",
+  "metric": "RMSPE",
+  "fold_scores": [
+    0.1752068094683093,
+    0.1654518327554987,
+    0.1105206983177236,
+    0.11340107005092007,
+    0.11099297799254942
+  ],
+  "mean_score": 0.1351146777170002,
+  "std_score": 0.028934142400836034,
+  "fold_results": [
+    {
+      "fold": 1,
+      "score": 0.1752068094683093,
+      "train_size": 312396,
+      "val_size": 38761,
+      "best_iteration": 210,
+      "train_time": 12.42067575454712
+    },
+    {
+      "fold": 2,
+      "score": 0.1654518327554987,
+      "train_size": 351157,
+      "val_size": 40164,
+      "best_iteration": 1987,
+      "train_time": 86.25748300552368
+    },
+    {
+      "fold": 3,
+      "score": 0.1105206983177236,
+      "train_size": 391321,
+      "val_size": 37018,
+      "best_iteration": 1248,
+      "train_time": 66.43628072738647
+    },
+    {
+      "fold": 4,
+      "score": 0.11340107005092007,
+      "train_size": 428339,
+      "val_size": 38108,
+      "best_iteration": 1540,
+      "train_time": 84.88915300369263
+    },
+    {
+      "fold": 5,
+      "score": 0.11099297799254942,
+      "train_size": 466447,
+      "val_size": 34985,
+      "best_iteration": 1999,
+      "train_time": 111.36476635932922
+    }
+  ],
+  "params": {
+    "loss_function": "RMSE",
+    "eval_metric": "RMSE",
+    "depth": 8,
+    "learning_rate": 0.03,
+    "l2_leaf_reg": 3,
+    "random_strength": 0.5,
+    "bagging_temperature": 0.2,
+    "border_count": 128,
+    "iterations": 2000,
+    "early_stopping_rounds": 100
+  },
+  "features": [
+    "DayOfWeek",
+    "Open",
+    "Promo",
+    "StateHoliday",
+    "SchoolHoliday",
+    "StoreType",
+    "Assortment",
+    "CompetitionDistance",
+    "CompetitionOpenSinceMonth",
+    "CompetitionOpenSinceYear",
+    "Promo2",
+    "Promo2SinceWeek",
+    "Promo2SinceYear",
+    "PromoInterval",
+    "Year",
+    "Month",
+    "Week",
+    "Day",
+    "DayOfMonth",
+    "Quarter",
+    "IsMonthStart",
+    "IsMonthEnd",
+    "IsQuarterStart",
+    "IsQuarterEnd",
+    "IsWeekend",
+    "Season",
+    "Promo2Active",
+    "Promo2Duration",
+    "PromoInterval_JAJO",
+    "PromoInterval_FMAN",
+    "PromoInterval_MJSD",
+    "CompetitionDistance_log",
+    "HasCompetition",
+    "CompetitionAge",
+    "Sales_Lag_1",
+    "Sales_Lag_7",
+    "Sales_Lag_14",
+    "Sales_Lag_28",
+    "Sales_RollingMean_7",
+    "Sales_RollingStd_7",
+    "Sales_RollingMean_14",
+    "Sales_RollingStd_14",
+    "Sales_RollingMean_28",
+    "Sales_RollingStd_28",
+    "Sales_RollingMean_60",
+    "Sales_RollingStd_60"
+  ],
+  "cat_features": [
+    "StateHoliday",
+    "StoreType",
+    "Assortment",
+    "PromoInterval"
+  ],
+  "models": [
+    "<catboost.core.CatBoost object at 0x127c860c0>",
+    "<catboost.core.CatBoost object at 0x12635e900>",
+    "<catboost.core.CatBoost object at 0x12534e8d0>",
+    "<catboost.core.CatBoost object at 0x130317050>",
+    "<catboost.core.CatBoost object at 0x13024bda0>"
+  ]
+}

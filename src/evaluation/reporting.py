@@ -105,13 +105,16 @@ def compare_models(
     comparison = []
 
     for model_name, results in results_dict.items():
+        # Ensure fold_scores are floats (in case loaded from JSON as strings)
+        fold_scores = [float(s) for s in results.get('fold_scores', [])]
+
         comparison.append({
             'Model': model_name,
-            f'Mean {metric}': results.get('mean_score', np.nan),
-            f'Std {metric}': results.get('std_score', np.nan),
-            f'Min {metric}': min(results.get('fold_scores', [np.nan])),
-            f'Max {metric}': max(results.get('fold_scores', [np.nan])),
-            'Num Folds': len(results.get('fold_scores', []))
+            f'Mean {metric}': float(results.get('mean_score', np.nan)),
+            f'Std {metric}': float(results.get('std_score', np.nan)),
+            f'Min {metric}': min(fold_scores) if fold_scores else np.nan,
+            f'Max {metric}': max(fold_scores) if fold_scores else np.nan,
+            'Num Folds': len(fold_scores)
         })
 
     df = pd.DataFrame(comparison)
