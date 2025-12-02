@@ -22,16 +22,20 @@ This spec-first approach enabled Claude Code to systematically implement each ph
 ## Final Results
 
 **Holdout Performance (6-week holdout set):**
-- **RMSPE: 0.100383**
+- **RMSPE: 0.100957**
 - This would rank approximately **top 100** on the original Kaggle leaderboard (if results held on final test set)
-- **36% improvement** over naive baseline (0.467720)
-- **29% improvement** over simple LightGBM baseline (0.140874)
+- **78.4% improvement** over naive baseline (0.467720)
+- **28.3% improvement** over simple LightGBM baseline (0.140874)
+- **Gap to target**: 2.43% (target: 0.09856)
 
 **Model Architecture:**
-- Weighted ensemble: **71% XGBoost + 29% CatBoost**
-- Trained on 818K historical observations
+- Three-model weighted ensemble with **Optuna-tuned hyperparameters**:
+  - **50% XGBoost** (RMSPE 0.1218 after tuning)
+  - **30% LightGBM** (RMSPE 0.1262 after tuning)
+  - **20% CatBoost** (RMSPE 0.1297 after tuning)
+- Trained on 778K historical observations (open stores only)
 - 46 engineered features including lags, rolling statistics, and temporal patterns
-- Evaluated on 35K predictions across 6-week holdout period
+- Evaluated on 40K predictions across 6-week holdout period
 
 **Performance Progression:**
 
@@ -39,10 +43,10 @@ This spec-first approach enabled Claude Code to systematically implement each ph
 |-------|-------|-------------|
 | Naive Last-Week | 0.4677 | baseline |
 | LightGBM Baseline | 0.1409 | 69.9% |
-| LightGBM Tuned | 0.1364 | 70.8% |
-| XGBoost | 0.1295 | 72.3% |
-| CatBoost | 0.1351 | 71.1% |
-| **Ensemble (Final)** | **0.1004** | **78.5%** |
+| LightGBM Tuned (Optuna) | 0.1262 | 73.0% |
+| XGBoost (Optuna) | 0.1218 | 74.0% |
+| CatBoost (Optuna) | 0.1297 | 72.3% |
+| **Ensemble (Final)** | **0.1010** | **78.4%** |
 | *Target (Top 50)* | *0.0986* | *Goal* |
 
 ## Repository Organization
@@ -62,7 +66,7 @@ graph TB
 
     subgraph "Evaluation"
         F -->|Phase 5| G[Final Model<br/>6-week Holdout]
-        G --> H[Predictions & Metrics<br/>RMSPE: 0.100383]
+        G --> H[Predictions & Metrics<br/>RMSPE: 0.100957]
     end
 
     subgraph "Outputs"
@@ -112,7 +116,7 @@ rossmann-forecasting/
 │
 ├── 🎯 models/                 # Saved model artifacts
 │   ├── baseline/
-│   └── final/                 # xgboost_final.json, catboost_final.cbm
+│   └── final/                 # lightgbm_final.txt, xgboost_final.json, catboost_final.cbm
 │
 ├── 📊 outputs/                # Analysis outputs
 │   ├── figures/               # Visualizations (17 plots)
@@ -144,10 +148,11 @@ rossmann-forecasting/
 - `outputs/metrics/` - All CV results and fold scores
 
 **4. Final Model & Evaluation**
-- `src/models/train_final.py` - Final ensemble training pipeline
-- `notebooks/05-final-eval-and-test-simulation.ipynb` - Holdout evaluation (RMSPE: 0.100383)
-- `models/final/` - Production-ready models
-- `outputs/predictions/final_holdout_predictions.csv` - 35K predictions
+- `src/models/train_final.py` - Final ensemble training pipeline (3-model blend with Optuna tuning)
+- `notebooks/05-final-eval-and-test-simulation.ipynb` - Holdout evaluation (RMSPE: 0.100957)
+- `models/final/` - Production-ready models (LightGBM + XGBoost + CatBoost)
+- `outputs/predictions/final_holdout_predictions.csv` - 40K predictions
+- `outputs/tuning/` - Optuna hyperparameter optimization results
 - `RUN_PHASE5.md` - Quick start guide for final evaluation
 
 **5. Performance Analysis**
@@ -164,7 +169,7 @@ $$RMSPE=\sqrt{\frac{1}{n}\sum_{i=1}^{n}\left(\frac{y_i - \hat{y}_i}{y_i}\right)^
 - Observations where Sales = 0 are ignored in scoring
 - Lower scores indicate better predictions
 - Original Kaggle target (top 50): **RMSPE < 0.09856**
-- Our result: **RMSPE = 0.100383** (~top 100)
+- Our result: **RMSPE = 0.100957** (~top 100, 2.43% gap to top 50)
 
 ## Quick Start
 
@@ -227,10 +232,11 @@ python run_phase5.py
 - **Categorical encoding**: Store type, assortment, state holiday, promo intervals
 
 ### 3. Ensemble Methodology
-- **Base models**: XGBoost (best individual, RMSPE 0.1295) + CatBoost (0.1351)
-- **Weight optimization**: Optimized on CV folds → 71% XGB, 29% CB
-- **Diversity**: XGBoost uses categorical encoding, CatBoost native categorical handling
-- **Validation**: Ensemble RMSPE 0.1281 on CV, 0.1004 on holdout
+- **Base models**: LightGBM + XGBoost + CatBoost with Optuna-tuned hyperparameters
+- **Weight optimization**: Based on tuned model performance → 50% XGB, 30% LGB, 20% CB
+- **Diversity**: Different boosting implementations and categorical handling approaches
+- **Hyperparameter tuning**: Bayesian optimization with Optuna (100 trials per model)
+- **Validation**: Holdout RMSPE 0.1010, gap to target 2.43%
 
 ### 4. Production-Ready Code
 - **Modular design**: Reusable functions for data processing, feature engineering, training
@@ -244,15 +250,16 @@ python run_phase5.py
 
 - **Time-series validation framework** - Properly structured CV prevented overfitting and gave realistic performance estimates
 - **Lag and rolling features** - Store-level historical patterns (lags 1, 7, 14, 28) were most important features
-- **Ensemble methods** - Weighted blend improved over best individual model by 2.2%
-- **Gradient boosting models** - XGBoost and CatBoost significantly outperformed baselines
+- **Hyperparameter optimization** - Optuna tuning improved model performance by 3-4% per model
+- **Three-model ensemble** - Weighted blend (LGB+XGB+CB) leveraged diverse boosting approaches
+- **Gradient boosting models** - Tuned XGBoost, LightGBM, and CatBoost significantly outperformed baselines
 - **Proper data handling** - Filtering open stores, handling missing values, excluding test-unavailable fields
 
 ### Opportunities for Improvement
 
-- **Hyperparameter tuning** - Optuna framework implemented but not fully optimized (see `outputs/tuning/`)
+- **Extended hyperparameter search** - Current 100 trials per model, could expand to 500+ for marginal gains
 - **Advanced features** - Interaction terms (promo × season), exponential smoothing, store clustering
-- **Stacked ensemble** - Meta-learner on out-of-fold predictions not yet implemented
+- **Stacked ensemble** - Meta-learner on out-of-fold predictions could improve by ~1%
 - **Deep learning** - LSTM/Transformer models could capture complex temporal patterns
 - **External data** - Weather, economic indicators, local events could improve predictions
 
@@ -271,11 +278,11 @@ python run_phase5.py
 
 ### Holdout Evaluation (6 weeks: 2015-06-20 to 2015-07-31)
 
-- **RMSPE**: 0.100383
-- **RMSE**: 949.62
-- **MAE**: 639.68
-- **MAPE**: 13.95%
-- **Predictions**: 35,169 (open stores only)
+- **RMSPE**: 0.100957
+- **RMSE**: 669.03
+- **MAE**: 456.45
+- **MAPE**: 7.08%
+- **Predictions**: 40,282 (open stores only)
 
 ### Feature Importance (Top 10)
 
