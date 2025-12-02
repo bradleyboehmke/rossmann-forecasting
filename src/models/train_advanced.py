@@ -258,10 +258,14 @@ def xgboost_model(
         dtrain = xgb.DMatrix(X_train, label=y_train)
         dval = xgb.DMatrix(X_val, label=y_val)
 
+        # Filter out training-specific params that should be separate arguments
+        train_params = {k: v for k, v in params.items()
+                       if k not in ['num_boost_round', 'early_stopping_rounds']}
+
         # Train model
         evals = [(dtrain, 'train'), (dval, 'valid')]
         model = xgb.train(
-            params,
+            train_params,
             dtrain,
             num_boost_round=2000,
             evals=evals,

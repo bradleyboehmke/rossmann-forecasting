@@ -146,10 +146,14 @@ def train_final_xgboost(
     # Create XGBoost dataset
     dtrain = xgb.DMatrix(X_train, label=y_train)
 
+    # Filter out training-specific params that should be separate arguments
+    train_params = {k: v for k, v in params.items()
+                   if k not in ['num_boost_round', 'early_stopping_rounds']}
+
     # Train model (use average best iteration from CV: ~1500)
     start_time = time.time()
     model = xgb.train(
-        params,
+        train_params,
         dtrain,
         num_boost_round=1600,  # Slightly more than CV average
         evals=[(dtrain, 'train')],
