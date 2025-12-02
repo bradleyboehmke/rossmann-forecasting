@@ -333,7 +333,7 @@ If you use this project structure or methodology, please cite:
 
 ```
 Rossmann Sales Forecasting: Spec-Driven Data Science with Agentic Coding
-https://github.com/[your-username]/rossmann-forecasting
+https://github.com/bradleyboehmke/rossmann-forecasting
 ```
 
 Original Kaggle competition: [Rossmann Store Sales](https://www.kaggle.com/c/rossmann-store-sales)
