@@ -17,7 +17,7 @@
       "train_size": 312396,
       "val_size": 38761,
       "best_iteration": 386,
-      "train_time": 4.346657752990723
+      "train_time": 4.296972036361694
     },
     {
       "fold": 2,
@@ -25,7 +25,7 @@
       "train_size": 351157,
       "val_size": 40164,
       "best_iteration": 660,
-      "train_time": 6.925297021865845
+      "train_time": 6.8920488357543945
     },
     {
       "fold": 3,
@@ -33,7 +33,7 @@
       "train_size": 391321,
       "val_size": 37018,
       "best_iteration": 146,
-      "train_time": 2.3896870613098145
+      "train_time": 2.3196041584014893
     },
     {
       "fold": 4,
@@ -41,7 +41,7 @@
       "train_size": 428339,
       "val_size": 38108,
       "best_iteration": 997,
-      "train_time": 9.959366083145142
+      "train_time": 9.94027590751648
     },
     {
       "fold": 5,
@@ -49,7 +49,7 @@
       "train_size": 466447,
       "val_size": 34985,
       "best_iteration": 432,
-      "train_time": 5.421674013137817
+      "train_time": 5.370938301086426
     }
   ],
   "params": {

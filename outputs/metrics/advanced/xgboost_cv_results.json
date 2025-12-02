@@ -17,7 +17,7 @@
       "train_size": 312396,
       "val_size": 38761,
       "best_iteration": 232,
-      "train_time": 2.4297759532928467
+      "train_time": 2.4310669898986816
     },
     {
       "fold": 2,
@@ -25,7 +25,7 @@
       "train_size": 351157,
       "val_size": 40164,
       "best_iteration": 1999,
-      "train_time": 13.194820880889893
+      "train_time": 13.122626066207886
     },
     {
       "fold": 3,
@@ -33,7 +33,7 @@
       "train_size": 391321,
       "val_size": 37018,
       "best_iteration": 1999,
-      "train_time": 13.836110830307007
+      "train_time": 13.802062034606934
     },
     {
       "fold": 4,
@@ -41,7 +41,7 @@
       "train_size": 428339,
       "val_size": 38108,
       "best_iteration": 1998,
-      "train_time": 14.625613927841187
+      "train_time": 14.42332410812378
     },
     {
       "fold": 5,
@@ -49,7 +49,7 @@
       "train_size": 466447,
       "val_size": 34985,
       "best_iteration": 1996,
-      "train_time": 15.151004076004028
+      "train_time": 15.040776252746582
     }
   ],
   "params": {
@@ -114,10 +114,10 @@
     "Sales_RollingStd_60"
   ],
   "models": [
-    "<xgboost.core.Booster object at 0x130369b80>",
-    "<xgboost.core.Booster object at 0x131408b60>",
-    "<xgboost.core.Booster object at 0x130314ef0>",
-    "<xgboost.core.Booster object at 0x1303804a0>",
-    "<xgboost.core.Booster object at 0x130317e60>"
+    "<xgboost.core.Booster object at 0x1369ce690>",
+    "<xgboost.core.Booster object at 0x1369cdd60>",
+    "<xgboost.core.Booster object at 0x136915670>",
+    "<xgboost.core.Booster object at 0x136164a10>",
+    "<xgboost.core.Booster object at 0x13337fbc0>"
   ]
 }

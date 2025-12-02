@@ -17,7 +17,7 @@
       "train_size": 312396,
       "val_size": 38761,
       "best_iteration": 275,
-      "train_time": 5.173828125
+      "train_time": 5.220146894454956
     },
     {
       "fold": 2,
@@ -25,7 +25,7 @@
       "train_size": 351157,
       "val_size": 40164,
       "best_iteration": 766,
-      "train_time": 11.353308916091919
+      "train_time": 11.336666822433472
     },
     {
       "fold": 3,
@@ -33,7 +33,7 @@
       "train_size": 391321,
       "val_size": 37018,
       "best_iteration": 827,
-      "train_time": 12.403856992721558
+      "train_time": 12.447880983352661
     },
     {
       "fold": 4,
@@ -41,7 +41,7 @@
       "train_size": 428339,
       "val_size": 38108,
       "best_iteration": 1984,
-      "train_time": 25.66816210746765
+      "train_time": 25.896060943603516
     },
     {
       "fold": 5,
@@ -49,7 +49,7 @@
       "train_size": 466447,
       "val_size": 34985,
       "best_iteration": 970,
-      "train_time": 14.914050102233887
+      "train_time": 14.94867992401123
     }
   ],
   "params": {
@@ -117,10 +117,10 @@
     "Sales_RollingStd_60"
   ],
   "models": [
-    "<lightgbm.basic.Booster object at 0x1303ca630>",
-    "<lightgbm.basic.Booster object at 0x126ddb320>",
-    "<lightgbm.basic.Booster object at 0x1303cad50>",
-    "<lightgbm.basic.Booster object at 0x1303caa80>",
-    "<lightgbm.basic.Booster object at 0x13140b890>"
+    "<lightgbm.basic.Booster object at 0x1369cf860>",
+    "<lightgbm.basic.Booster object at 0x1369b6660>",
+    "<lightgbm.basic.Booster object at 0x1369cf650>",
+    "<lightgbm.basic.Booster object at 0x1354b49e0>",
+    "<lightgbm.basic.Booster object at 0x1369b6420>"
   ]
 }

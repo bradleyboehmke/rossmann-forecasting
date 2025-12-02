@@ -17,7 +17,7 @@
       "train_size": 312396,
       "val_size": 38761,
       "best_iteration": 210,
-      "train_time": 12.42067575454712
+      "train_time": 12.510321855545044
     },
     {
       "fold": 2,
@@ -25,7 +25,7 @@
       "train_size": 351157,
       "val_size": 40164,
       "best_iteration": 1987,
-      "train_time": 86.25748300552368
+      "train_time": 86.04087495803833
     },
     {
       "fold": 3,
@@ -33,7 +33,7 @@
       "train_size": 391321,
       "val_size": 37018,
       "best_iteration": 1248,
-      "train_time": 66.43628072738647
+      "train_time": 63.889240980148315
     },
     {
       "fold": 4,
@@ -41,7 +41,7 @@
       "train_size": 428339,
       "val_size": 38108,
       "best_iteration": 1540,
-      "train_time": 84.88915300369263
+      "train_time": 84.16188192367554
     },
     {
       "fold": 5,
@@ -49,7 +49,7 @@
       "train_size": 466447,
       "val_size": 34985,
       "best_iteration": 1999,
-      "train_time": 111.36476635932922
+      "train_time": 110.51198625564575
     }
   ],
   "params": {
@@ -119,10 +119,10 @@
     "PromoInterval"
   ],
   "models": [
-    "<catboost.core.CatBoost object at 0x127c860c0>",
-    "<catboost.core.CatBoost object at 0x12635e900>",
-    "<catboost.core.CatBoost object at 0x12534e8d0>",
-    "<catboost.core.CatBoost object at 0x130317050>",
-    "<catboost.core.CatBoost object at 0x13024bda0>"
+    "<catboost.core.CatBoost object at 0x1369cd9a0>",
+    "<catboost.core.CatBoost object at 0x13340edb0>",
+    "<catboost.core.CatBoost object at 0x1369440b0>",
+    "<catboost.core.CatBoost object at 0x1354901d0>",
+    "<catboost.core.CatBoost object at 0x136164dd0>"
   ]
 }

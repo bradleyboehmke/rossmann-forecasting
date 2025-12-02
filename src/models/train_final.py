@@ -171,14 +171,16 @@ def train_final_ensemble(
     train_df: pd.DataFrame,
     feature_cols: List[str],
     target_col: str = 'Sales',
-    weights: Dict[str, float] = None
+    weights: Dict[str, float] = None,
+    use_tuned_params: bool = True
 ) -> Dict[str, Any]:
     """
-    Train final ensemble model (XGBoost + CatBoost weighted blend).
+    Train final ensemble model (LightGBM + XGBoost + CatBoost weighted blend).
 
-    Based on Phase 4 results, the optimal ensemble uses:
-    - 71% XGBoost
-    - 29% CatBoost
+    Based on Optuna tuning results, the optimal ensemble uses:
+    - ~50% XGBoost (best: 0.121780)
+    - ~30% LightGBM (0.126174)
+    - ~20% CatBoost (0.129670)
 
     Parameters
     ----------
@@ -189,7 +191,9 @@ def train_final_ensemble(
     target_col : str, default='Sales'
         Target column name
     weights : dict, optional
-        Model weights (defaults to Phase 4 optimal weights)
+        Model weights (defaults to optimized weights from tuning results)
+    use_tuned_params : bool, default=True
+        Use Optuna-tuned hyperparameters from outputs/tuning/best_hyperparameters.json
 
     Returns
     -------
@@ -197,17 +201,33 @@ def train_final_ensemble(
         Dictionary containing trained models and metadata
     """
     logger.info("="*60)
-    logger.info("Training Final Ensemble Model")
+    logger.info("Training Final Ensemble Model (3-Model Blend)")
     logger.info("="*60)
 
-    # Default weights from Phase 4
+    # Default weights optimized from Optuna tuning results
+    # Based on inverse RMSPE weighting: XGBoost (best) gets highest weight
     if weights is None:
         weights = {
-            'xgboost': 0.71,
-            'catboost': 0.29
+            'lightgbm': 0.30,
+            'xgboost': 0.50,
+            'catboost': 0.20
         }
 
     logger.info(f"Ensemble weights: {weights}")
+    logger.info(f"Using tuned hyperparameters: {use_tuned_params}")
+
+    # Load tuned hyperparameters if requested
+    tuned_params = None
+    if use_tuned_params:
+        tuned_params_path = Path('outputs/tuning/best_hyperparameters.json')
+        if tuned_params_path.exists():
+            with open(tuned_params_path, 'r') as f:
+                tuned_params = json.load(f)
+            logger.info(f"Loaded tuned hyperparameters from {tuned_params_path}")
+        else:
+            logger.warning(f"Tuned parameters file not found: {tuned_params_path}")
+            logger.warning("Using default hyperparameters instead")
+            use_tuned_params = False
 
     # Filter to open stores
     train_df = train_df[train_df['Open'] == 1].copy()
@@ -225,10 +245,62 @@ def train_final_ensemble(
     logger.info(f"Features: {len(valid_features)}")
     logger.info(f"Categorical features: {len(cat_features)}")
 
+    # Prepare common training data
+    y_train = train_df[target_col]
+
+    # Train LightGBM
+    logger.info("\nTraining LightGBM component...")
+    X_train_lgb = train_df[valid_features]
+
+    if use_tuned_params and tuned_params:
+        lgb_params = {
+            'objective': 'regression',
+            'metric': 'rmse',
+            'boosting_type': 'gbdt',
+            'num_leaves': tuned_params['lightgbm']['num_leaves'],
+            'learning_rate': tuned_params['lightgbm']['learning_rate'],
+            'feature_fraction': tuned_params['lightgbm']['feature_fraction'],
+            'bagging_fraction': tuned_params['lightgbm']['bagging_fraction'],
+            'bagging_freq': tuned_params['lightgbm']['bagging_freq'],
+            'max_depth': tuned_params['lightgbm']['max_depth'],
+            'min_child_samples': tuned_params['lightgbm']['min_child_samples'],
+            'reg_alpha': tuned_params['lightgbm']['reg_alpha'],
+            'reg_lambda': tuned_params['lightgbm']['reg_lambda'],
+            'verbose': -1,
+            'seed': 42
+        }
+    else:
+        lgb_params = {
+            'objective': 'regression',
+            'metric': 'rmse',
+            'boosting_type': 'gbdt',
+            'num_leaves': 50,
+            'learning_rate': 0.03,
+            'feature_fraction': 0.8,
+            'bagging_fraction': 0.7,
+            'bagging_freq': 5,
+            'max_depth': 8,
+            'min_child_samples': 20,
+            'reg_alpha': 0.1,
+            'reg_lambda': 0.1,
+            'verbose': -1,
+            'seed': 42
+        }
+
+    lgb_train = lgb.Dataset(X_train_lgb, label=y_train, categorical_feature=cat_features)
+    lgb_model = lgb.train(
+        lgb_params,
+        lgb_train,
+        num_boost_round=1600,
+        valid_sets=[lgb_train],
+        valid_names=['train'],
+        callbacks=[lgb.log_evaluation(period=0)]
+    )
+    logger.info("LightGBM training complete")
+
     # Train XGBoost
     logger.info("\nTraining XGBoost component...")
     X_train_xgb = train_df[valid_features].copy()
-    y_train = train_df[target_col]
 
     for col in X_train_xgb.columns:
         if X_train_xgb[col].dtype.name == 'category':
@@ -236,19 +308,35 @@ def train_final_ensemble(
 
     dtrain = xgb.DMatrix(X_train_xgb, label=y_train)
 
-    xgb_params = {
-        'objective': 'reg:squarederror',
-        'eval_metric': 'rmse',
-        'max_depth': 8,
-        'learning_rate': 0.03,
-        'subsample': 0.7,
-        'colsample_bytree': 0.8,
-        'min_child_weight': 3,
-        'reg_alpha': 0.1,
-        'reg_lambda': 1.0,
-        'seed': 42,
-        'verbosity': 0
-    }
+    if use_tuned_params and tuned_params:
+        xgb_params = {
+            'objective': 'reg:squarederror',
+            'eval_metric': 'rmse',
+            'max_depth': tuned_params['xgboost']['max_depth'],
+            'learning_rate': tuned_params['xgboost']['learning_rate'],
+            'subsample': tuned_params['xgboost']['subsample'],
+            'colsample_bytree': tuned_params['xgboost']['colsample_bytree'],
+            'min_child_weight': tuned_params['xgboost']['min_child_weight'],
+            'reg_alpha': tuned_params['xgboost']['reg_alpha'],
+            'reg_lambda': tuned_params['xgboost']['reg_lambda'],
+            'gamma': tuned_params['xgboost']['gamma'],
+            'seed': 42,
+            'verbosity': 0
+        }
+    else:
+        xgb_params = {
+            'objective': 'reg:squarederror',
+            'eval_metric': 'rmse',
+            'max_depth': 8,
+            'learning_rate': 0.03,
+            'subsample': 0.7,
+            'colsample_bytree': 0.8,
+            'min_child_weight': 3,
+            'reg_alpha': 0.1,
+            'reg_lambda': 1.0,
+            'seed': 42,
+            'verbosity': 0
+        }
 
     xgb_model = xgb.train(
         xgb_params,
@@ -265,19 +353,34 @@ def train_final_ensemble(
 
     train_pool = cb.Pool(X_train_cb, label=y_train, cat_features=cat_features)
 
-    cb_params = {
-        'loss_function': 'RMSE',
-        'eval_metric': 'RMSE',
-        'depth': 8,
-        'learning_rate': 0.03,
-        'l2_leaf_reg': 3,
-        'random_strength': 0.5,
-        'bagging_temperature': 0.2,
-        'border_count': 128,
-        'iterations': 1500,
-        'verbose': False,
-        'random_seed': 42
-    }
+    if use_tuned_params and tuned_params:
+        cb_params = {
+            'loss_function': 'RMSE',
+            'eval_metric': 'RMSE',
+            'depth': tuned_params['catboost']['depth'],
+            'learning_rate': tuned_params['catboost']['learning_rate'],
+            'l2_leaf_reg': tuned_params['catboost']['l2_leaf_reg'],
+            'random_strength': tuned_params['catboost']['random_strength'],
+            'bagging_temperature': tuned_params['catboost']['bagging_temperature'],
+            'border_count': tuned_params['catboost']['border_count'],
+            'iterations': 1500,
+            'verbose': False,
+            'random_seed': 42
+        }
+    else:
+        cb_params = {
+            'loss_function': 'RMSE',
+            'eval_metric': 'RMSE',
+            'depth': 8,
+            'learning_rate': 0.03,
+            'l2_leaf_reg': 3,
+            'random_strength': 0.5,
+            'bagging_temperature': 0.2,
+            'border_count': 128,
+            'iterations': 1500,
+            'verbose': False,
+            'random_seed': 42
+        }
 
     cb_model = cb.CatBoost(cb_params)
     cb_model.fit(train_pool)
@@ -287,6 +390,7 @@ def train_final_ensemble(
 
     ensemble = {
         'models': {
+            'lightgbm': lgb_model,
             'xgboost': xgb_model,
             'catboost': cb_model
         },
@@ -324,6 +428,10 @@ def predict_with_ensemble(
     valid_features = ensemble['features']
     test_df, _ = remove_missing_features(test_df, valid_features)
 
+    # LightGBM predictions
+    X_test_lgb = test_df[valid_features]
+    lgb_preds = ensemble['models']['lightgbm'].predict(X_test_lgb, num_iteration=ensemble['models']['lightgbm'].best_iteration)
+
     # XGBoost predictions
     X_test_xgb = test_df[valid_features].copy()
     for col in X_test_xgb.columns:
@@ -341,6 +449,7 @@ def predict_with_ensemble(
     # Weighted blend
     weights = ensemble['weights']
     blended_preds = (
+        weights['lightgbm'] * lgb_preds +
         weights['xgboost'] * xgb_preds +
         weights['catboost'] * cb_preds
     )
@@ -444,6 +553,11 @@ def save_final_model(
     logger.info("Saving Final Model")
     logger.info("="*60)
 
+    # Save LightGBM model
+    lgb_path = output_path / 'lightgbm_final.txt'
+    ensemble['models']['lightgbm'].save_model(str(lgb_path))
+    logger.info(f"Saved LightGBM model to {lgb_path}")
+
     # Save XGBoost model
     xgb_path = output_path / 'xgboost_final.json'
     ensemble['models']['xgboost'].save_model(str(xgb_path))
@@ -461,7 +575,7 @@ def save_final_model(
         'cat_features': ensemble['cat_features'],
         'metrics': metrics,
         'model_type': 'ensemble',
-        'components': ['xgboost', 'catboost']
+        'components': ['lightgbm', 'xgboost', 'catboost']
     }
 
     metadata_path = output_path / 'ensemble_metadata.json'
