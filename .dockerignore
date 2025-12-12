@@ -1,0 +1,78 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+
+# Virtual environments
+venv/
+.venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Data files (too large for images)
+data/
+*.csv
+*.parquet
+
+# Jupyter
+.ipynb_checkpoints/
+notebooks/
+
+# Outputs
+outputs/
+*.png
+*.jpg
+*.pdf
+
+# Model files (loaded from volume)
+models/
+mlruns/
+mlartifacts/
+
+# Logs
+*.log
+logs/
+
+# Test and coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# DVC
+.dvc/
+*.dvc
+
+# Great Expectations
+great_expectations/uncommitted/
+
+# Monitoring
+monitoring/drift_reports/
+monitoring/performance_reports/
+
+# macOS
+.DS_Store
+
+# Documentation
+*.md
+!README.md
+
+# CI/CD
+.github/
+
+# Spec documents
+spec-*.md

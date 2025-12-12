@@ -1,0 +1,119 @@
+{
+  "data_asset_type": "Dataset",
+  "expectation_suite_name": "raw_train_suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 100000,
+        "max_value": 2000000
+      },
+      "meta": {
+        "notes": "Train data should have reasonable row count"
+      }
+    },
+    {
+      "expectation_type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": ["Store", "DayOfWeek", "Date", "Sales", "Customers", "Open", "Promo", "StateHoliday", "SchoolHoliday"]
+      },
+      "meta": {
+        "notes": "Validate expected columns are present and in correct order"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "Store"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "Date"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "DayOfWeek"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "Sales",
+        "min_value": 0,
+        "max_value": 50000
+      },
+      "meta": {
+        "notes": "Sales should be non-negative and within reasonable range"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "Customers",
+        "min_value": 0,
+        "max_value": 10000,
+        "mostly": 0.95
+      },
+      "meta": {
+        "notes": "Customers should be non-negative. Allow some outliers."
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "Open",
+        "value_set": [0, 1]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "Promo",
+        "value_set": [0, 1]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "DayOfWeek",
+        "value_set": [1, 2, 3, 4, 5, 6, 7]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "StateHoliday",
+        "value_set": ["0", "a", "b", "c", 0]
+      },
+      "meta": {
+        "notes": "StateHoliday can be string '0' or integer 0 (mixed types in raw data)"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "SchoolHoliday",
+        "value_set": [0, 1]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "Store",
+        "min_value": 1,
+        "max_value": 1200
+      },
+      "meta": {
+        "notes": "Store IDs should be in expected range"
+      }
+    }
+  ],
+  "meta": {
+    "great_expectations_version": "0.18.0",
+    "notes": "Validation suite for raw train.csv data"
+  }
+}

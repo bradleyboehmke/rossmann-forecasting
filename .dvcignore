@@ -1,0 +1,19 @@
+# Add patterns of files dvc should ignore, which could be
+# large files/directories that are not being tracked by DVC
+# Local:
+.dvcignore
+.git
+.venv
+venv
+__pycache__
+*.pyc
+.ipynb_checkpoints
+.DS_Store
+
+# Jupyter:
+*.ipynb
+
+# Python:
+*.egg-info
+dist/
+build/

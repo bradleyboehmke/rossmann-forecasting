@@ -1,0 +1,20 @@
+name: processed_data_checkpoint
+config_version: 1.0
+class_name: SimpleCheckpoint
+run_name_template: "%Y%m%d-%H%M%S-processed-data-validation"
+
+validations:
+  - batch_request:
+      datasource_name: rossmann_datasource
+      data_connector_name: processed_data_connector
+      data_asset_name: train_clean
+    expectation_suite_name: processed_data_suite
+
+action_list:
+  - name: store_validation_result
+    action:
+      class_name: StoreValidationResultAction
+
+  - name: update_data_docs
+    action:
+      class_name: UpdateDataDocsAction
