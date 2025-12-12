@@ -1,0 +1,130 @@
+site_name: Rossmann Sales Forecasting
+site_description: Production ML system for Rossmann sales forecasting with MLOps best practices
+site_author: Bradley Boehmke
+site_url: https://bradleyboehmke.github.io/rossmann-forecasting
+
+repo_name: bradleyboehmke/rossmann-forecasting
+repo_url: https://github.com/bradleyboehmke/rossmann-forecasting
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+  icon:
+    repo: fontawesome/brands/github
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          options:
+            docstring_style: google
+            show_source: true
+            show_root_heading: true
+  - mkdocs-jupyter:
+      include_source: true
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - tables
+  - attr_list
+  - md_in_html
+  - toc:
+      permalink: true
+
+nav:
+  - Home: index.md
+  - Getting Started:
+      - Quick Start: getting-started/quickstart.md
+      - Detailed Setup: getting-started/detailed-setup.md
+      - Pre-commit Hooks: getting-started/pre-commit.md
+      - Project Structure: getting-started/structure.md
+      - Workflow: getting-started/workflow.md
+  - DataOps:
+      - Overview: dataops/overview.md
+      - Individual Steps: dataops/steps.md
+      - Data Validation: dataops/validation.md
+      - Pipeline Automation: dataops/automation.md
+      - Real-World Scenarios: dataops/scenarios.md
+      - Best Practices: dataops/best-practices.md
+  - ModelOps:
+      - Overview: modelops/overview.md
+      - Experiment Tracking: modelops/tracking.md
+      - Model Training: modelops/training.md
+      - Model Registry: modelops/registry.md
+      - Hyperparameter Tuning: modelops/tuning.md
+  - Deployment:
+      - Overview: deployment/overview.md
+      - FastAPI: deployment/fastapi.md
+      - Streamlit Dashboard: deployment/streamlit.md
+      - Docker: deployment/docker.md
+  - Monitoring:
+      - Overview: monitoring/overview.md
+      - Data Drift: monitoring/drift.md
+      - Model Performance: monitoring/performance.md
+      - Prediction Logging: monitoring/logging.md
+  - Testing:
+      - Overview: testing/overview.md
+      - Data Tests: testing/data-tests.md
+      - Model Tests: testing/model-tests.md
+      - API Tests: testing/api-tests.md
+  - CI/CD:
+      - Overview: cicd/overview.md
+      - GitHub Actions: cicd/github-actions.md
+      - Workflows: cicd/workflows.md
+  - API Reference:
+      - Data: api/data.md
+      - Features: api/features.md
+      - Models: api/models.md
+      - Evaluation: api/evaluation.md
+      - Monitoring: api/monitoring.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/bradleyboehmke
+    - icon: fontawesome/brands/linkedin
+      link: https://linkedin.com/in/bradleyboehmke
+
+copyright: Copyright &copy; 2024 Bradley Boehmke
