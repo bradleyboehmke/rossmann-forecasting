@@ -38,7 +38,6 @@ catboost_info/
 # - Processed data & features: excluded from Git, tracked by DVC
 /data/processed/*.parquet
 /data/processed/*.csv
-/data/features/
 
 # Model artifacts (optional - can be large)
 # models/**/*.pkl
