@@ -75,3 +75,7 @@ htmlcov/
 
 # MkDocs
 site/
+
+# Specification documents (keep local, don't track)
+spec-rossmann-forecasting.md
+spec-rossmann-mlops.md
