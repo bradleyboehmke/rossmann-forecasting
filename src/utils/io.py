@@ -1,15 +1,13 @@
-"""
-I/O utilities for reading and writing data files.
-"""
+"""I/O utilities for reading and writing data files."""
 
-import pandas as pd
 from pathlib import Path
 from typing import Union
 
+import pandas as pd
+
 
 def read_csv(filepath: Union[str, Path], **kwargs) -> pd.DataFrame:
-    """
-    Read CSV file into pandas DataFrame.
+    """Read CSV file into pandas DataFrame.
 
     Parameters
     ----------
@@ -27,8 +25,7 @@ def read_csv(filepath: Union[str, Path], **kwargs) -> pd.DataFrame:
 
 
 def read_parquet(filepath: Union[str, Path], categorize: bool = True, **kwargs) -> pd.DataFrame:
-    """
-    Read Parquet file into pandas DataFrame.
+    """Read Parquet file into pandas DataFrame.
 
     Parameters
     ----------
@@ -49,18 +46,17 @@ def read_parquet(filepath: Union[str, Path], categorize: bool = True, **kwargs) 
 
     if categorize:
         # List of columns that should be categorical in Rossmann dataset
-        categorical_cols = ['StoreType', 'Assortment', 'StateHoliday', 'PromoInterval']
+        categorical_cols = ["StoreType", "Assortment", "StateHoliday", "PromoInterval"]
 
         for col in categorical_cols:
-            if col in df.columns and df[col].dtype == 'object':
-                df[col] = df[col].astype('category')
+            if col in df.columns and df[col].dtype == "object":
+                df[col] = df[col].astype("category")
 
     return df
 
 
 def save_csv(df: pd.DataFrame, filepath: Union[str, Path], **kwargs) -> None:
-    """
-    Save DataFrame to CSV file.
+    """Save DataFrame to CSV file.
 
     Parameters
     ----------
@@ -75,15 +71,14 @@ def save_csv(df: pd.DataFrame, filepath: Union[str, Path], **kwargs) -> None:
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
 
     # Default to not writing index
-    if 'index' not in kwargs:
-        kwargs['index'] = False
+    if "index" not in kwargs:
+        kwargs["index"] = False
 
     df.to_csv(filepath, **kwargs)
 
 
 def save_parquet(df: pd.DataFrame, filepath: Union[str, Path], **kwargs) -> None:
-    """
-    Save DataFrame to Parquet file.
+    """Save DataFrame to Parquet file.
 
     Parameters
     ----------
@@ -98,15 +93,15 @@ def save_parquet(df: pd.DataFrame, filepath: Union[str, Path], **kwargs) -> None
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
 
     # Default to not writing index
-    if 'index' not in kwargs:
-        kwargs['index'] = False
+    if "index" not in kwargs:
+        kwargs["index"] = False
 
     # Make a copy to avoid modifying original
     df_to_save = df.copy()
 
     # Convert categorical columns to string to avoid Arrow conversion issues
     # This is especially important for categories with mixed string/numeric values
-    categorical_columns = df_to_save.select_dtypes(include=['category']).columns
+    categorical_columns = df_to_save.select_dtypes(include=["category"]).columns
     for col in categorical_columns:
         df_to_save[col] = df_to_save[col].astype(str)
 
@@ -114,8 +109,7 @@ def save_parquet(df: pd.DataFrame, filepath: Union[str, Path], **kwargs) -> None
 
 
 def ensure_dir(dirpath: Union[str, Path]) -> Path:
-    """
-    Ensure directory exists, creating it if necessary.
+    """Ensure directory exists, creating it if necessary.
 
     Parameters
     ----------

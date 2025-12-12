@@ -1,30 +1,26 @@
-"""
-Reporting utilities for model evaluation and results presentation.
-"""
+"""Reporting utilities for model evaluation and results presentation."""
 
-import pandas as pd
-import numpy as np
 import json
-from pathlib import Path
-from typing import Dict, List, Any
 import sys
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
 
-from utils.log import get_logger
 from utils.io import ensure_dir
+from utils.log import get_logger
 
 logger = get_logger(__name__)
 
 
 def save_cv_results(
-    results: Dict[str, Any],
-    model_name: str,
-    output_dir: str = "outputs/metrics/baseline"
+    results: dict[str, Any], model_name: str, output_dir: str = "outputs/metrics/baseline"
 ) -> None:
-    """
-    Save cross-validation results to JSON file.
+    """Save cross-validation results to JSON file.
 
     Parameters
     ----------
@@ -44,18 +40,14 @@ def save_cv_results(
 
     output_path = Path(output_dir) / f"{model_name}_cv_results.json"
 
-    with open(output_path, 'w') as f:
+    with open(output_path, "w") as f:
         json.dump(results, f, indent=2, default=str)
 
     logger.info(f"Saved CV results to {output_path}")
 
 
-def print_cv_summary(
-    results: Dict[str, Any],
-    model_name: str = None
-) -> None:
-    """
-    Print a formatted summary of cross-validation results.
+def print_cv_summary(results: dict[str, Any], model_name: str = None) -> None:
+    """Print a formatted summary of cross-validation results.
 
     Parameters
     ----------
@@ -64,17 +56,17 @@ def print_cv_summary(
     model_name : str, optional
         Model name to display (overrides results['model_name'])
     """
-    name = model_name or results.get('model_name', 'Model')
-    metric = results.get('metric', 'Score')
-    fold_scores = results.get('fold_scores', [])
-    mean_score = results.get('mean_score', np.nan)
-    std_score = results.get('std_score', np.nan)
+    name = model_name or results.get("model_name", "Model")
+    metric = results.get("metric", "Score")
+    fold_scores = results.get("fold_scores", [])
+    mean_score = results.get("mean_score", np.nan)
+    std_score = results.get("std_score", np.nan)
 
     print("=" * 60)
     print(f"{name} - Cross-Validation Results")
     print("=" * 60)
     print(f"Metric: {metric}")
-    print(f"\nPer-fold scores:")
+    print("\nPer-fold scores:")
     for i, score in enumerate(fold_scores, 1):
         print(f"  Fold {i}: {score:.6f}")
     print(f"\nMean {metric}: {mean_score:.6f}")
@@ -83,12 +75,8 @@ def print_cv_summary(
     print("=" * 60)
 
 
-def compare_models(
-    results_dict: Dict[str, Dict[str, Any]],
-    metric: str = 'RMSPE'
-) -> pd.DataFrame:
-    """
-    Compare multiple models and create a summary dataframe.
+def compare_models(results_dict: dict[str, dict[str, Any]], metric: str = "RMSPE") -> pd.DataFrame:
+    """Compare multiple models and create a summary dataframe.
 
     Parameters
     ----------
@@ -106,30 +94,29 @@ def compare_models(
 
     for model_name, results in results_dict.items():
         # Ensure fold_scores are floats (in case loaded from JSON as strings)
-        fold_scores = [float(s) for s in results.get('fold_scores', [])]
+        fold_scores = [float(s) for s in results.get("fold_scores", [])]
 
-        comparison.append({
-            'Model': model_name,
-            f'Mean {metric}': float(results.get('mean_score', np.nan)),
-            f'Std {metric}': float(results.get('std_score', np.nan)),
-            f'Min {metric}': min(fold_scores) if fold_scores else np.nan,
-            f'Max {metric}': max(fold_scores) if fold_scores else np.nan,
-            'Num Folds': len(fold_scores)
-        })
+        comparison.append(
+            {
+                "Model": model_name,
+                f"Mean {metric}": float(results.get("mean_score", np.nan)),
+                f"Std {metric}": float(results.get("std_score", np.nan)),
+                f"Min {metric}": min(fold_scores) if fold_scores else np.nan,
+                f"Max {metric}": max(fold_scores) if fold_scores else np.nan,
+                "Num Folds": len(fold_scores),
+            }
+        )
 
     df = pd.DataFrame(comparison)
 
     # Sort by mean score (ascending for error metrics like RMSPE)
-    df = df.sort_values(f'Mean {metric}', ascending=True).reset_index(drop=True)
+    df = df.sort_values(f"Mean {metric}", ascending=True).reset_index(drop=True)
 
     return df
 
 
-def create_cv_summary_table(
-    fold_results: List[Dict[str, Any]]
-) -> pd.DataFrame:
-    """
-    Create a summary table from detailed fold results.
+def create_cv_summary_table(fold_results: list[dict[str, Any]]) -> pd.DataFrame:
+    """Create a summary table from detailed fold results.
 
     Parameters
     ----------
@@ -150,12 +137,9 @@ def create_cv_summary_table(
 
 
 def save_predictions(
-    predictions: pd.DataFrame,
-    model_name: str,
-    output_dir: str = "outputs/predictions"
+    predictions: pd.DataFrame, model_name: str, output_dir: str = "outputs/predictions"
 ) -> None:
-    """
-    Save model predictions to CSV file.
+    """Save model predictions to CSV file.
 
     Parameters
     ----------
@@ -175,11 +159,8 @@ def save_predictions(
     logger.info(f"Saved predictions to {output_path}")
 
 
-def calculate_summary_stats(
-    scores: List[float]
-) -> Dict[str, float]:
-    """
-    Calculate summary statistics for a list of scores.
+def calculate_summary_stats(scores: list[float]) -> dict[str, float]:
+    """Calculate summary statistics for a list of scores.
 
     Parameters
     ----------
@@ -192,9 +173,9 @@ def calculate_summary_stats(
         Dictionary with mean, std, min, max, median
     """
     return {
-        'mean': np.mean(scores),
-        'std': np.std(scores),
-        'min': np.min(scores),
-        'max': np.max(scores),
-        'median': np.median(scores)
+        "mean": np.mean(scores),
+        "std": np.std(scores),
+        "min": np.min(scores),
+        "max": np.max(scores),
+        "median": np.median(scores),
     }

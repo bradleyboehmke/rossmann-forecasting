@@ -1,20 +1,12 @@
-"""
-Logging utilities for the project.
-"""
+"""Logging utilities for the project."""
 
 import logging
 import sys
 from pathlib import Path
-from typing import Optional
 
 
-def get_logger(
-    name: str,
-    level: int = logging.INFO,
-    log_file: Optional[str] = None
-) -> logging.Logger:
-    """
-    Get or create a logger with standard formatting.
+def get_logger(name: str, level: int = logging.INFO, log_file: str | None = None) -> logging.Logger:
+    """Get or create a logger with standard formatting.
 
     Parameters
     ----------
@@ -38,8 +30,7 @@ def get_logger(
 
         # Create formatter
         formatter = logging.Formatter(
-            fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-            datefmt='%Y-%m-%d %H:%M:%S'
+            fmt="%(asctime)s - %(name)s - %(levelname)s - %(message)s", datefmt="%Y-%m-%d %H:%M:%S"
         )
 
         # Console handler
@@ -62,8 +53,7 @@ def get_logger(
 
 
 def set_log_level(logger: logging.Logger, level: int) -> None:
-    """
-    Set logging level for a logger and all its handlers.
+    """Set logging level for a logger and all its handlers.
 
     Parameters
     ----------

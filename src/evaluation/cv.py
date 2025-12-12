@@ -1,15 +1,14 @@
-"""
-Time-series cross-validation utilities for the Rossmann forecasting project.
+"""Time-series cross-validation utilities for the Rossmann forecasting project.
 
 CRITICAL: Uses expanding window splits to prevent data leakage.
 Each fold trains on all historical data up to the validation period.
 """
 
-import pandas as pd
-import numpy as np
-from typing import List, Tuple, Dict, Any
-from pathlib import Path
 import sys
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -24,10 +23,9 @@ def make_time_series_folds(
     n_folds: int = 5,
     fold_length_days: int = 42,
     min_train_days: int = 365,
-    date_col: str = 'Date'
-) -> List[Tuple[np.ndarray, np.ndarray]]:
-    """
-    Create expanding window time-series cross-validation folds.
+    date_col: str = "Date",
+) -> list[tuple[np.ndarray, np.ndarray]]:
+    """Create expanding window time-series cross-validation folds.
 
     Each fold:
     - Trains on all historical data up to the validation period
@@ -62,12 +60,12 @@ def make_time_series_folds(
     Fold 3: Train [2013-01-01 to 2014-09-22], Val [2014-09-23 to 2014-11-03]
     ...
     """
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Creating time-series cross-validation folds")
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info(f"Number of folds: {n_folds}")
-    logger.info(f"Validation fold length: {fold_length_days} days ({fold_length_days//7} weeks)")
-    logger.info(f"Minimum training days: {min_train_days} days ({min_train_days//365} year)")
+    logger.info(f"Validation fold length: {fold_length_days} days ({fold_length_days // 7} weeks)")
+    logger.info(f"Minimum training days: {min_train_days} days ({min_train_days // 365} year)")
 
     # Ensure date column is datetime type
     if not pd.api.types.is_datetime64_any_dtype(df[date_col]):
@@ -105,7 +103,9 @@ def make_time_series_folds(
 
     for fold_idx in range(n_folds):
         # Calculate validation start date using date arithmetic (not index arithmetic)
-        val_start_date = unique_dates[first_val_start_idx] + pd.Timedelta(days=fold_idx * fold_length_days)
+        val_start_date = unique_dates[first_val_start_idx] + pd.Timedelta(
+            days=fold_idx * fold_length_days
+        )
 
         # Calculate validation end date
         val_end_date = val_start_date + pd.Timedelta(days=fold_length_days - 1)
@@ -138,20 +138,17 @@ def make_time_series_folds(
         logger.info(f"  Train: {train_start} to {train_end} ({len(train_indices):,} samples)")
         logger.info(f"  Val:   {val_start} to {val_end} ({len(val_indices):,} samples)")
 
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info(f"Created {len(folds)} time-series CV folds")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     return folds
 
 
 def get_fold_summary(
-    df: pd.DataFrame,
-    folds: List[Tuple[np.ndarray, np.ndarray]],
-    date_col: str = 'Date'
+    df: pd.DataFrame, folds: list[tuple[np.ndarray, np.ndarray]], date_col: str = "Date"
 ) -> pd.DataFrame:
-    """
-    Generate a summary dataframe of fold information.
+    """Generate a summary dataframe of fold information.
 
     Parameters
     ----------
@@ -177,18 +174,18 @@ def get_fold_summary(
 
     for fold_idx, (train_idx, val_idx) in enumerate(folds):
         fold_info = {
-            'fold': fold_idx + 1,
-            'train_start': df.iloc[train_idx[0]][date_col],
-            'train_end': df.iloc[train_idx[-1]][date_col],
-            'train_size': len(train_idx),
-            'val_start': df.iloc[val_idx[0]][date_col],
-            'val_end': df.iloc[val_idx[-1]][date_col],
-            'val_size': len(val_idx)
+            "fold": fold_idx + 1,
+            "train_start": df.iloc[train_idx[0]][date_col],
+            "train_end": df.iloc[train_idx[-1]][date_col],
+            "train_size": len(train_idx),
+            "val_start": df.iloc[val_idx[0]][date_col],
+            "val_end": df.iloc[val_idx[-1]][date_col],
+            "val_size": len(val_idx),
         }
 
         # Calculate days
-        fold_info['train_days'] = (fold_info['train_end'] - fold_info['train_start']).days + 1
-        fold_info['val_days'] = (fold_info['val_end'] - fold_info['val_start']).days + 1
+        fold_info["train_days"] = (fold_info["train_end"] - fold_info["train_start"]).days + 1
+        fold_info["val_days"] = (fold_info["val_end"] - fold_info["val_start"]).days + 1
 
         summary.append(fold_info)
 
@@ -196,12 +193,9 @@ def get_fold_summary(
 
 
 def filter_open_stores(
-    df: pd.DataFrame,
-    open_col: str = 'Open',
-    date_col: str = 'Date'
+    df: pd.DataFrame, open_col: str = "Open", date_col: str = "Date"
 ) -> pd.DataFrame:
-    """
-    Filter dataset to only include days when stores were open.
+    """Filter dataset to only include days when stores were open.
 
     This is important because:
     1. Closed stores have Sales=0 which is ignored in RMSPE
@@ -229,18 +223,16 @@ def filter_open_stores(
     # This is critical for CV fold indices to work correctly
     df_filtered = df_filtered.sort_values(date_col).reset_index(drop=True)
 
-    logger.info(f"Filtered out {removed:,} closed store-days ({removed/initial_size*100:.2f}%)")
+    logger.info(f"Filtered out {removed:,} closed store-days ({removed / initial_size * 100:.2f}%)")
     logger.info(f"Remaining: {len(df_filtered):,} open store-days")
 
     return df_filtered
 
 
 def remove_missing_features(
-    df: pd.DataFrame,
-    feature_cols: List[str]
-) -> Tuple[pd.DataFrame, List[str]]:
-    """
-    Remove rows with missing values in feature columns.
+    df: pd.DataFrame, feature_cols: list[str]
+) -> tuple[pd.DataFrame, list[str]]:
+    """Remove rows with missing values in feature columns.
 
     This is necessary because lag/rolling features have NaN values
     for early dates where there's insufficient history.
@@ -273,7 +265,9 @@ def remove_missing_features(
     df_clean = df.dropna(subset=valid_features).copy()
 
     removed = initial_size - len(df_clean)
-    logger.info(f"Removed {removed:,} rows with missing features ({removed/initial_size*100:.2f}%)")
+    logger.info(
+        f"Removed {removed:,} rows with missing features ({removed / initial_size * 100:.2f}%)"
+    )
     logger.info(f"Remaining: {len(df_clean):,} complete rows")
 
     return df_clean, valid_features
