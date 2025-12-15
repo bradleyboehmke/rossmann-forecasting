@@ -44,9 +44,8 @@ catboost_info/
 # models/**/*.joblib
 # models/**/*.h5
 
-# Output files (optional - if you want to regenerate)
-# outputs/figures/*.png
-# outputs/predictions/*.csv
+# Output files (all experiments tracked in MLflow)
+outputs/
 
 # DVC
 .dvc/cache
