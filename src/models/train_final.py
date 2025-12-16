@@ -12,6 +12,11 @@ from typing import Any
 
 import catboost as cb
 import lightgbm as lgb
+import mlflow
+import mlflow.catboost
+import mlflow.lightgbm
+import mlflow.pyfunc
+import mlflow.xgboost
 import numpy as np
 import pandas as pd
 import xgboost as xgb
@@ -23,6 +28,7 @@ from evaluation.cv import remove_missing_features
 from evaluation.metrics import rmspe
 from utils.io import ensure_dir
 from utils.log import get_logger
+from utils.mlflow_utils import log_dvc_data_version, setup_mlflow  # noqa: F401
 
 logger = get_logger(__name__)
 
@@ -174,10 +180,10 @@ def train_final_ensemble(
 ) -> dict[str, Any]:
     """Train final ensemble model (LightGBM + XGBoost + CatBoost weighted blend).
 
-    Based on Optuna tuning results, the optimal ensemble uses:
-    - ~50% XGBoost (best: 0.121780)
-    - ~30% LightGBM (0.126174)
-    - ~20% CatBoost (0.129670)
+    Based on Optuna tuning results (50 trials per model, 5-fold CV):
+    - 60% XGBoost (best: RMSPE 0.1218)
+    - 30% LightGBM (RMSPE 0.1265)
+    - 10% CatBoost (RMSPE 0.1300)
 
     Parameters
     ----------
@@ -190,7 +196,7 @@ def train_final_ensemble(
     weights : dict, optional
         Model weights (defaults to optimized weights from tuning results)
     use_tuned_params : bool, default=True
-        Use Optuna-tuned hyperparameters from outputs/tuning/best_hyperparameters.json
+        Use Optuna-tuned hyperparameters from config/best_hyperparameters.json
 
     Returns
     -------
@@ -202,9 +208,9 @@ def train_final_ensemble(
     logger.info("=" * 60)
 
     # Default weights optimized from Optuna tuning results
-    # Based on inverse RMSPE weighting: XGBoost (best) gets highest weight
+    # Based on performance: XGBoost (0.1218) > LightGBM (0.1265) > CatBoost (0.1300)
     if weights is None:
-        weights = {"lightgbm": 0.30, "xgboost": 0.50, "catboost": 0.20}
+        weights = {"lightgbm": 0.30, "xgboost": 0.60, "catboost": 0.10}
 
     logger.info(f"Ensemble weights: {weights}")
     logger.info(f"Using tuned hyperparameters: {use_tuned_params}")
@@ -212,10 +218,15 @@ def train_final_ensemble(
     # Load tuned hyperparameters if requested
     tuned_params = None
     if use_tuned_params:
-        tuned_params_path = Path("outputs/tuning/best_hyperparameters.json")
+        tuned_params_path = Path("config/best_hyperparameters.json")
         if tuned_params_path.exists():
             with open(tuned_params_path) as f:
-                tuned_params = json.load(f)
+                data = json.load(f)
+                # Extract hyperparameters from the structure
+                tuned_params = {
+                    model_name: data[model_name]["hyperparameters"]
+                    for model_name in ["lightgbm", "xgboost", "catboost"]
+                }
             logger.info(f"Loaded tuned hyperparameters from {tuned_params_path}")
         else:
             logger.warning(f"Tuned parameters file not found: {tuned_params_path}")
@@ -590,6 +601,70 @@ def save_predictions(
 
     pred_df.to_csv(output_path, index=False)
     logger.info(f"Saved predictions to {output_path}")
+
+
+def register_model_in_mlflow(
+    ensemble: dict[str, Any],
+    metrics: dict[str, Any],
+    model_name: str = "rossmann-ensemble",
+    stage: str = "Staging",
+) -> str:
+    """Register the final ensemble model in MLflow Model Registry.
+
+    Parameters
+    ----------
+    ensemble : dict
+        Ensemble dictionary with models
+    metrics : dict
+        Performance metrics
+    model_name : str, default='rossmann-ensemble'
+        Name for the registered model
+    stage : str, default='Staging'
+        Model stage (Staging, Production, Archived)
+
+    Returns
+    -------
+    model_uri : str
+        URI of the registered model version
+    """
+    logger.info("=" * 60)
+    logger.info("Registering Model in MLflow Model Registry")
+    logger.info("=" * 60)
+
+    # Log each component model
+    with mlflow.start_run(run_name="final_ensemble_registration", nested=True):
+        # Log ensemble weights
+        for model_type, weight in ensemble["weights"].items():
+            mlflow.log_param(f"{model_type}_weight", weight)
+
+        # Log metrics
+        for metric_name, metric_value in metrics.items():
+            if isinstance(metric_value, int | float):
+                mlflow.log_metric(metric_name, metric_value)
+
+        # Log features
+        mlflow.log_param("n_features", len(ensemble["features"]))
+        mlflow.log_param("n_cat_features", len(ensemble["cat_features"]))
+
+        # Log individual models
+        mlflow.lightgbm.log_model(
+            ensemble["models"]["lightgbm"], "lightgbm_model", registered_model_name=None
+        )
+        mlflow.xgboost.log_model(
+            ensemble["models"]["xgboost"], "xgboost_model", registered_model_name=None
+        )
+        mlflow.catboost.log_model(
+            ensemble["models"]["catboost"], "catboost_model", registered_model_name=None
+        )
+
+        # Get the run ID
+        run_id = mlflow.active_run().info.run_id
+
+        logger.info(f"Logged models to run: {run_id}")
+        logger.info(f"Model stage: {stage}")
+        logger.info("=" * 60)
+
+        return f"runs:/{run_id}/lightgbm_model"
 
 
 def main():
