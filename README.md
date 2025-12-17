@@ -34,9 +34,9 @@ This spec-first approach enabled Claude Code to systematically implement each ph
 **Model Architecture:**
 
 - Three-model weighted ensemble with **Optuna-tuned hyperparameters**:
-  - **50% XGBoost** (RMSPE 0.1218 after tuning)
-  - **30% LightGBM** (RMSPE 0.1262 after tuning)
-  - **20% CatBoost** (RMSPE 0.1297 after tuning)
+    - **50% XGBoost** (RMSPE 0.1218 after tuning)
+    - **30% LightGBM** (RMSPE 0.1262 after tuning)
+    - **20% CatBoost** (RMSPE 0.1297 after tuning)
 - Trained on 778K historical observations (open stores only)
 - 46 engineered features including lags, rolling statistics, and temporal patterns
 - Evaluated on 40K predictions across 6-week holdout period

@@ -13,7 +13,8 @@ The monitoring framework provides:
 
 ## Module Reference
 
-::: src.monitoring options: show_source: true heading_level: 3 show_root_heading: false
+!!! info "Coming Soon"
+    The monitoring module is currently under development. Monitoring functionality will be added in a future release.
 
 ## Usage Examples
 

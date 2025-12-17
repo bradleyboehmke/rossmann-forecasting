@@ -14,17 +14,25 @@ All models are evaluated using **RMSPE** (Root Mean Square Percentage Error) wit
 
 ## Module Reference
 
-### Baseline Models
+### Ensemble Model
 
-::: src.models.train_baselines options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.ensemble options: show_source: true heading_level: 4 show_root_heading: false
 
-### Advanced Models
+### Model Registry
 
-::: src.models.train_advanced options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.model_registry options: show_source: true heading_level: 4 show_root_heading: false
 
-### Ensemble Models
+### Training Pipeline
 
-::: src.models.ensembles options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.train_ensemble options: show_source: true heading_level: 4 show_root_heading: false
+
+### Model Validation
+
+::: src.models.validate_model options: show_source: true heading_level: 4 show_root_heading: false
+
+### Inference Pipeline
+
+::: src.models.predict options: show_source: true heading_level: 4 show_root_heading: false
 
 ## Usage Examples
 

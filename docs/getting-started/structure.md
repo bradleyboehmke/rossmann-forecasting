@@ -201,9 +201,9 @@ ______________________________________________________________________
 **Feature engineering**
 
 - **`build_features.py`**: Creates calendar, promo, competition, lag, and rolling features
-  - Time-series safe (no data leakage)
-  - Store-level grouping for lags/rolling
-  - Output: `train_features.parquet`
+    - Time-series safe (no data leakage)
+    - Store-level grouping for lags/rolling
+    - Output: `train_features.parquet`
 
 ### `src/models/`
 
@@ -342,5 +342,5 @@ Now that you understand the project structure, explore the MLOps workflows:
 
 - **[Quick Start](quickstart.md)** - Get up and running in 5 minutes
 - **[DataOps Workflow](../dataops/overview.md)** - Data processing and validation
-- **[Model Training](../modelops/training.md)** - Train and track experiments
-- **[Deployment Guide](../deployment/overview.md)** - Deploy models to production
+- **[Model Training](../modelops/overview.md)** - Train and track experiments
+- **Deployment** - Deploy models to production (Coming Soon)

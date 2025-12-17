@@ -103,7 +103,7 @@ git commit -m "data: version processed data and features"
 - `data/processed/train_features.parquet` - Feature-engineered dataset
 - `data/processed/*.dvc` - DVC metadata files
 
-**Learn more:** [DataOps Workflow Guide](../dataops/workflow.md)
+**Learn more:** [DataOps Workflow Guide](../dataops/overview.md)
 
 ______________________________________________________________________
 
@@ -214,7 +214,7 @@ flowchart TB
     style Monitor fill:#ffd54f
 ```
 
-**Learn more:** [Deployment Guide](../deployment/overview.md)
+**Learn more:** Deployment guide coming soon
 
 ______________________________________________________________________
 
@@ -276,7 +276,7 @@ flowchart LR
 - Performance metrics over time
 - Alerts for issues requiring attention
 
-**Learn more:** [Monitoring Guide](../monitoring/overview.md)
+**Learn more:** Monitoring guide coming soon
 
 ______________________________________________________________________
 
@@ -403,7 +403,7 @@ ______________________________________________________________________
 Now that you understand the complete workflow:
 
 - **[Quick Start](quickstart.md)** - Get up and running in 5 minutes
-- **[DataOps Workflow](../dataops/workflow.md)** - Deep dive into data processing
-- **[Model Training](../modelops/training.md)** - Learn experiment tracking
-- **[Deployment Guide](../deployment/overview.md)** - Deploy to production
-- **[Monitoring Guide](../monitoring/overview.md)** - Track performance
+- **[DataOps Workflow](../dataops/overview.md)** - Deep dive into data processing
+- **[Model Training](../modelops/overview.md)** - Learn experiment tracking
+- **Deployment** - Deploy to production (Coming Soon)
+- **Monitoring** - Track performance (Coming Soon)

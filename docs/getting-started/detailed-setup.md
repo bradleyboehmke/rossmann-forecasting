@@ -2,7 +2,8 @@
 
 Complete installation and setup instructions for the Rossmann forecasting project. This guide provides step-by-step explanations for users new to MLOps projects.
 
-!!! tip "Already Familiar with Python Projects?" If you're comfortable with Python development, try the [Quick Start Guide](quickstart.md) for a faster setup.
+!!! tip "Already Familiar with Python Projects?"
+    If you're comfortable with Python development, try the [Quick Start Guide](quickstart.md) for a faster setup.
 
 ## Prerequisites
 
@@ -144,7 +145,7 @@ python -m src.data.make_dataset
 python -m src.features.build_features
 ```
 
-**Learn more**: [DataOps Workflow Guide](../dataops/workflow.md)
+**Learn more**: [DataOps Workflow Guide](../dataops/overview.md)
 
 ### 2. Model Experimentation
 
@@ -184,7 +185,7 @@ dvc repro build_features
 dvc dag
 ```
 
-**Learn more**: [DVC Pipeline Guide](../dataops/workflow.md#automation-options-orchestrating-the-full-pipeline)
+**Learn more**: [DVC Pipeline Guide](../dataops/overview.md#automation-options-orchestrating-the-full-pipeline)
 
 ### 4. Deployment (Optional)
 
@@ -200,7 +201,7 @@ docker-compose up --build
 # - MLflow: http://localhost:5000
 ```
 
-**Learn more**: [Deployment Guide](../deployment/overview.md)
+**Learn more**: Deployment guide coming soon
 
 ## Next Steps
 
@@ -208,7 +209,7 @@ After setup is complete:
 
 1. ✅ [Quick Start Guide](quickstart.md) - Run your first workflow
 1. ✅ [Project Structure](structure.md) - Understand the codebase
-1. ✅ [DataOps Workflow](../dataops/workflow.md) - Process and validate data
+1. ✅ [DataOps Workflow](../dataops/overview.md) - Process and validate data
 1. ✅ [Model Training](../modelops/training.md) - Train your first model
 
 ## Additional Resources

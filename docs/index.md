@@ -1,10 +1,9 @@
 # Rossmann Sales Forecasting
 
-!!! info "Production MLOps System" This repository accompanies the [ML/AI System Design book](https://bradleyboehmke.github.io/uc-bana-7075/), providing a hands-on implementation of the concepts covered in the course.
+!!! info "Production MLOps System"
+    This repository accompanies the [ML/AI System Design book](https://bradleyboehmke.github.io/uc-bana-7075/), providing a hands-on implementation of the concepts covered in the course.
 
-```
-This project demonstrates end-to-end MLOps best practices for traditional machine learning, using the Kaggle Rossmann Store Sales competition as a real-world example. The reason for this example is because many students and individuals new to MLOps are often exposed to Kaggle examples—this is a great way to learn how to build production ML systems using familiar datasets.
-```
+    This project demonstrates end-to-end MLOps best practices for traditional machine learning, using the Kaggle Rossmann Store Sales competition as a real-world example. The reason for this example is because many students and individuals new to MLOps are often exposed to Kaggle examples—this is a great way to learn how to build production ML systems using familiar datasets.
 
 ## Overview
 
@@ -76,35 +75,33 @@ The Rossmann Sales Forecasting project is a **production-ready ML system** that 
 
 - :material-rocket-launch:{ .lg .middle } __Getting Started__
 
-  ______________________________________________________________________
+    ______________________________________________________________________
 
-  Install and set up the project in minutes
+    Install and set up the project in minutes
 
-  [:octicons-arrow-right-24: Quick Start](getting-started/quickstart.md)
+    [:octicons-arrow-right-24: Quick Start](getting-started/quickstart.md)
 
 - :material-database:{ .lg .middle } __DataOps__
 
-  ______________________________________________________________________
+    ______________________________________________________________________
 
-  Learn data processing, validation, and versioning
+    Learn data processing, validation, and versioning
 
-  [:octicons-arrow-right-24: DataOps Guide](dataops/overview.md)
+    [:octicons-arrow-right-24: DataOps Guide](dataops/overview.md)
 
 - :material-brain:{ .lg .middle } __ModelOps__
 
-  ______________________________________________________________________
+    ______________________________________________________________________
 
-  Train, track, and register models with MLflow
+    Train, track, and register models with MLflow
 
-  [:octicons-arrow-right-24: ModelOps Guide](modelops/overview.md)
+    [:octicons-arrow-right-24: ModelOps Guide](modelops/overview.md)
 
 - :material-cloud-upload:{ .lg .middle } __Deployment__
 
-  ______________________________________________________________________
+    ______________________________________________________________________
 
-  Deploy models via API and dashboard
-
-  [:octicons-arrow-right-24: Deployment Guide](deployment/overview.md)
+    Deploy models via API and dashboard (Coming Soon)
 
 </div>
 

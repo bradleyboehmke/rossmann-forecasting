@@ -116,11 +116,11 @@ python -m src.models.train_advanced
 **src/utils/io.py**
 
 - `read_parquet()`: Load parquet files with automatic categorical column restoration
-  - By default, converts known categorical columns (StoreType, Assortment, StateHoliday, PromoInterval) back to category dtype
-  - Use `categorize=False` to keep as strings if needed
+    - By default, converts known categorical columns (StoreType, Assortment, StateHoliday, PromoInterval) back to category dtype
+    - Use `categorize=False` to keep as strings if needed
 - `save_parquet()`: Save parquet files with automatic categorical-to-string conversion
-  - Prevents Arrow conversion errors with mixed string/numeric categorical values
-  - Categorical columns are stored as strings and restored on load
+    - Prevents Arrow conversion errors with mixed string/numeric categorical values
+    - Categorical columns are stored as strings and restored on load
 
 **src/data/make_dataset.py**
 
@@ -147,11 +147,11 @@ python -m src.models.train_advanced
 **src/evaluation/metrics.py**
 
 - `rmspe()`: Root Mean Square Percentage Error (ignores Sales=0)
-  ```python
-  def rmspe(y_true, y_pred, ignore_zero_sales=True):
-      mask = y_true != 0 if ignore_zero_sales else np.ones_like(y_true, dtype=bool)
-      return np.sqrt(np.mean(np.square((y_true[mask] - y_pred[mask]) / y_true[mask])))
-  ```
+    ```python
+    def rmspe(y_true, y_pred, ignore_zero_sales=True):
+        mask = y_true != 0 if ignore_zero_sales else np.ones_like(y_true, dtype=bool)
+        return np.sqrt(np.mean(np.square((y_true[mask] - y_pred[mask]) / y_true[mask])))
+    ```
 
 **src/models/train_baselines.py**
 
@@ -358,9 +358,9 @@ The project uses ruff with the following key rules:
 - All feature engineering functions must have tests in `tests/test_features.py`
 - Critical tests for time-series safety (lag/rolling features don't leak across stores)
 - Test fixtures must match actual data structure:
-  - `sample_train_data`: Train data only (no store metadata)
-  - `sample_store_data`: Store metadata only
-  - `sample_features_data`: Merged train + store data with basic features
+    - `sample_train_data`: Train data only (no store metadata)
+    - `sample_store_data`: Store metadata only
+    - `sample_features_data`: Merged train + store data with basic features
 
 ### Documentation Requirements
 

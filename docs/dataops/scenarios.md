@@ -167,32 +167,32 @@ Recommend manual review before proceeding.
 
 1. **Investigate outliers**
 
-   ```bash
-   # Review outlier records
-   python -c "
-   import pandas as pd
-   df = pd.read_csv('data/raw/train.csv')
-   print(df[df['Sales'] > 1000000])
-   "
-   ```
+    ```bash
+    # Review outlier records
+    python -c "
+    import pandas as pd
+    df = pd.read_csv('data/raw/train.csv')
+    print(df[df['Sales'] > 1000000])
+    "
+    ```
 
 1. **Update expectations** (if legitimate)
 
-   ```python
-   # If Black Friday sales spike is real
-   validator.expect_column_values_to_be_between(
-       column="Sales",
-       min_value=0,
-       max_value=2000000  # Increased limit
-   )
-   ```
+    ```python
+    # If Black Friday sales spike is real
+    validator.expect_column_values_to_be_between(
+        column="Sales",
+        min_value=0,
+        max_value=2000000  # Increased limit
+    )
+    ```
 
 1. **Cap outliers** (if data errors)
 
-   ```python
-   # In make_dataset.py
-   df["Sales"] = df["Sales"].clip(upper=1000000)
-   ```
+    ```python
+    # In make_dataset.py
+    df["Sales"] = df["Sales"].clip(upper=1000000)
+    ```
 
 ______________________________________________________________________
 
@@ -350,28 +350,28 @@ ______________________________________________________________________
 
 1. **Validation gates prevent bad data from propagating**
 
-   - Fail fast, fail safely
-   - Alert humans when intervention needed
+    - Fail fast, fail safely
+    - Alert humans when intervention needed
 
 1. **Automation enables hands-off operation**
 
-   - Scheduled runs work reliably
-   - Human intervention only for exceptions
+    - Scheduled runs work reliably
+    - Human intervention only for exceptions
 
 1. **Versioning enables easy rollback**
 
-   - DVC + Git track exact data state
-   - Return to any previous version quickly
+    - DVC + Git track exact data state
+    - Return to any previous version quickly
 
 1. **Smart caching speeds up iteration**
 
-   - DVC only reruns changed stages
-   - Developers iterate faster
+    - DVC only reruns changed stages
+    - Developers iterate faster
 
 1. **Quality over speed**
 
-   - Better to run on slightly outdated data than broken data
-   - Reliability > freshness
+    - Better to run on slightly outdated data than broken data
+    - Reliability > freshness
 
 ______________________________________________________________________
 

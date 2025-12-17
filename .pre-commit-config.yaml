@@ -47,6 +47,7 @@ repos:
         additional_dependencies:
           - mdformat-gfm
           - mdformat-frontmatter
+          - mdformat-mkdocs
 
   # Local hooks using dev dependencies
   - repo: local

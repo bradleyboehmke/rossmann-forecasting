@@ -443,26 +443,26 @@ cat great_expectations/uncommitted/validations/latest.json
 
 1. **Fix data at source** (preferred)
 
-   - Contact data provider
-   - Correct upstream ETL process
+    - Contact data provider
+    - Correct upstream ETL process
 
 1. **Update expectations** (if assumptions changed)
 
-   ```python
-   # If sales range legitimately increased
-   validator.expect_column_values_to_be_between(
-       column="Sales",
-       min_value=0,
-       max_value=2000000  # Increased from 1M
-   )
-   ```
+    ```python
+    # If sales range legitimately increased
+    validator.expect_column_values_to_be_between(
+        column="Sales",
+        min_value=0,
+        max_value=2000000  # Increased from 1M
+    )
+    ```
 
 1. **Add data cleaning** (if pattern is expected)
 
-   ```python
-   # Add outlier capping in make_dataset.py
-   df["Sales"] = df["Sales"].clip(upper=1000000)
-   ```
+    ```python
+    # Add outlier capping in make_dataset.py
+    df["Sales"] = df["Sales"].clip(upper=1000000)
+    ```
 
 ### Performance Issues with Large Datasets
 
@@ -472,21 +472,21 @@ cat great_expectations/uncommitted/validations/latest.json
 
 1. **Sample data** for validation
 
-   ```python
-   # Validate on sample
-   sample = df.sample(n=100000, random_state=42)
-   validator = context.get_validator(sample)
-   ```
+    ```python
+    # Validate on sample
+    sample = df.sample(n=100000, random_state=42)
+    validator = context.get_validator(sample)
+    ```
 
 1. **Reduce expectation complexity**
 
-   - Remove statistical expectations on large columns
-   - Focus on schema and critical value checks
+    - Remove statistical expectations on large columns
+    - Focus on schema and critical value checks
 
 1. **Parallelize validation**
 
-   - Run different suites concurrently
-   - Use Great Expectations' batch mode
+    - Run different suites concurrently
+    - Use Great Expectations' batch mode
 
 ______________________________________________________________________
 

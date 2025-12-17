@@ -2,7 +2,8 @@
 
 Get up and running with the Rossmann forecasting project in 5 minutes.
 
-!!! tip "New to MLOps Projects?" If you're unfamiliar with Python project setup, check the [Detailed Setup Guide](detailed-setup.md) for step-by-step instructions.
+!!! tip "New to MLOps Projects?"
+    If you're unfamiliar with Python project setup, check the [Detailed Setup Guide](detailed-setup.md) for step-by-step instructions.
 
 ## Installation (3 minutes)
 
@@ -52,8 +53,8 @@ Choose one to explore:
 **Explore MLOps workflows:**
 
 1. 📊 [DataOps Workflow](../dataops/overview.md) - Data validation, processing, versioning
-1. 🤖 [Model Training](../modelops/training.md) - Experiment tracking with MLflow
-1. 🚀 [Deployment](../deployment/overview.md) - API and dashboard deployment
-1. 📈 [Monitoring](../monitoring/overview.md) - Data drift and performance tracking
+1. 🤖 [Model Training](../modelops/overview.md) - Experiment tracking with MLflow
+1. 🚀 Deployment - API and dashboard deployment (Coming Soon)
+1. 📈 Monitoring - Data drift and performance tracking (Coming Soon)
 
 **Need help?** See the [Detailed Setup Guide](detailed-setup.md) for troubleshooting and advanced configuration.

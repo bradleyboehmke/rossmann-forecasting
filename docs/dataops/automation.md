@@ -6,7 +6,7 @@ ______________________________________________________________________
 
 ## Option 1: Bash Script Automation
 
-We provide a complete automation script at [`scripts/dataops_workflow.sh`](../../scripts/dataops_workflow.sh):
+We provide a complete automation script at `scripts/dataops_workflow.sh`:
 
 ```bash
 # Run the complete automated workflow
@@ -36,7 +36,7 @@ ______________________________________________________________________
 
 ## Option 2: DVC Pipeline Automation
 
-For even more automation, use DVC's built-in pipeline orchestration (defined in [`dvc.yaml`](../../dvc.yaml)):
+For even more automation, use DVC's built-in pipeline orchestration (defined in `dvc.yaml`):
 
 ```bash
 # Run entire pipeline (only re-runs changed stages)
