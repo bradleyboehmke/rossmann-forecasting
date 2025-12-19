@@ -83,6 +83,29 @@ jupyter notebook notebooks/04-advanced-models-and-ensembles.ipynb
 jupyter notebook notebooks/05-final-eval-and-test-simulation.ipynb
 ```
 
+### ModelOps Production Workflows
+
+```bash
+# Launch MLflow UI to view experiments
+bash scripts/start_mlflow.sh
+# Opens at http://localhost:5000
+
+# Train production ensemble model
+python src/models/train_ensemble.py
+
+# Validate and promote model to Staging
+python src/models/validate_model.py
+
+# Promote Staging model to Production (after manual review)
+python src/models/validate_model.py --promote-to-production
+
+# Generate predictions using Production model
+python src/models/predict.py --stage Production
+
+# Run complete retraining pipeline (automated)
+bash scripts/retrain_pipeline.sh
+```
+
 ### Running Individual Modules
 
 ```bash
@@ -91,25 +114,29 @@ python -m src.data.make_dataset
 
 # Feature engineering
 python -m src.features.build_features
-
-# Train baseline models
-python -m src.models.train_baselines
-
-# Train advanced models
-python -m src.models.train_advanced
 ```
 
 ## Architecture
 
 ### Data Flow
 
+**DataOps Pipeline (Experimentation):**
+
 1. **Raw data** (`data/raw/`) → train.csv, store.csv
 1. **Cleaning** (`src/data/make_dataset.py`) → `data/processed/train_clean.parquet`
 1. **Feature Engineering** (`src/features/build_features.py`) → `data/processed/train_features.parquet`
-1. **Time-Series CV** (`src/evaluation/cv.py`) → expanding window splits
-1. **Model Training** (`src/models/`) → per-fold predictions
-1. **Ensemble** (`src/models/ensembles.py`) → weighted blend or stacking
-1. **Final Model** → predictions saved to `outputs/predictions/`
+1. **Experimentation** (notebooks 03, 04, 05) → MLflow experiment tracking
+1. **Hyperparameter tuning** (Optuna) → `config/best_hyperparameters.json`
+
+**ModelOps Pipeline (Production):**
+
+1. **Load features** → `data/processed/train_features.parquet`
+1. **Load best hyperparameters** → `config/best_hyperparameters.json`
+1. **Train ensemble** (`src/models/train_ensemble.py`) → Register to MLflow Model Registry
+1. **Validate model** (`src/models/validate_model.py`) → Auto-promote to Staging if RMSPE \< 0.10
+1. **Manual review** → MLflow UI inspection, inference testing
+1. **Promote to Production** → `validate_model.py --promote-to-production`
+1. **Generate predictions** (`src/models/predict.py`) → Load model by stage, save predictions
 
 ### Module Responsibilities
 
@@ -153,22 +180,47 @@ python -m src.models.train_advanced
         return np.sqrt(np.mean(np.square((y_true[mask] - y_pred[mask]) / y_true[mask])))
     ```
 
-**src/models/train_baselines.py**
+**src/models/ensemble.py**
 
-- Naive last-week model (baseline benchmark)
-- Simple LightGBM with default params
-- Returns per-fold RMSPE
+- `RossmannEnsemble`: Custom MLflow PyFunc wrapper for ensemble models
+- Combines LightGBM (30%), XGBoost (60%), CatBoost (10%) predictions
+- Enables single-artifact deployment with all three models packaged together
+- Handles feature preprocessing and weighted prediction averaging
 
-**src/models/train_advanced.py**
+**src/models/train_ensemble.py**
 
-- Tuned LightGBM, XGBoost, CatBoost
-- Hyperparameter optimization
-- Cross-validation with RMSPE metric
+- Production training script for ensemble model
+- Loads best hyperparameters from `config/best_hyperparameters.json`
+- Trains LightGBM, XGBoost, CatBoost with optimized parameters
+- Wraps models in `RossmannEnsemble` PyFunc for deployment
+- Registers trained ensemble to MLflow Model Registry
+- Logs hyperparameters, metrics, and artifacts to MLflow
 
-**src/models/ensembles.py**
+**src/models/validate_model.py**
 
-- `weighted_blend()`: Weighted average of model predictions
-- `stacked_ensemble()`: Meta-learner (Linear/LightGBM) on out-of-fold predictions
+- Automated validation and stage promotion workflow
+- Loads latest registered model from MLflow
+- Evaluates on holdout validation set (RMSPE calculation)
+- Auto-promotes to Staging if RMSPE \< 0.10 threshold
+- Supports manual Production promotion: `--promote-to-production`
+- Archives previous Production model when promoting new version
+
+**src/models/model_registry.py**
+
+- Utilities for interacting with MLflow Model Registry
+- `load_model()`: Load model by stage (Staging/Production) or version number
+- `promote_model()`: Transition model between stages with optional archival
+- `get_model_version()`: Retrieve version number for a given stage
+- `get_model_info()`: Fetch model metadata and version details
+- `list_registered_models()`: List all models in registry
+
+**src/models/predict.py**
+
+- Production inference pipeline
+- Loads model from MLflow Registry by stage (default: Production)
+- Generates predictions for new data
+- Saves predictions to CSV with timestamps
+- Command-line interface: `--stage`, `--output`, `--data-path` options
 
 ### Configuration
 
@@ -177,7 +229,15 @@ python -m src.models.train_advanced
 - Data paths
 - Feature engineering parameters (lags, windows)
 - CV strategy (expanding, fold length, min train days)
-- Model hyperparameters
+- Model hyperparameters (deprecated in favor of `best_hyperparameters.json`)
+
+**config/best_hyperparameters.json** - Production hyperparameters:
+
+- Generated by Optuna tuning in notebook 04
+- Contains optimal hyperparameters for LightGBM, XGBoost, CatBoost
+- Includes metadata (best model, CV RMSPE scores)
+- Used by `train_ensemble.py` for production training
+- JSON format for easy parsing and version control
 
 ### Quality Infrastructure
 
@@ -219,6 +279,58 @@ python -m src.models.train_advanced
 - Ensures reproducible data processing
 - Run with `bash scripts/dataops_workflow.sh`
 
+**MLflow Integration**
+
+- Experiment tracking for all notebook-based model training (notebooks 03, 04, 05)
+- Optuna-MLflow integration for hyperparameter tuning visualization
+- Model Registry for versioning and stage-based lifecycle management
+- Stages: None (Registered) → Staging → Production → Archived
+- Launch UI: `bash scripts/start_mlflow.sh` or `mlflow ui`
+- Web interface at http://localhost:5000
+
+**ModelOps Automation** (`scripts/retrain_pipeline.sh`)
+
+- End-to-end retraining workflow from data validation to model promotion
+- Steps: Data validation → Feature engineering → Model training → Validation → Staging promotion
+- Designed for scheduled execution (cron, Airflow) or manual triggers
+- Requires manual review before Production promotion (human-in-the-loop safety)
+- Run with `bash scripts/retrain_pipeline.sh`
+
+## ModelOps Workflow
+
+The project implements a complete MLOps lifecycle from experimentation to production deployment:
+
+### 1. Experimentation (Notebooks)
+
+- **Notebook 03**: Baseline models (naive, simple LightGBM/XGBoost) to establish performance benchmarks
+- **Notebook 04**: Hyperparameter tuning with Optuna (100+ trials per model), ensemble development
+- **Notebook 05**: Final model training with best hyperparameters, evaluation on holdout test set
+- All experiments tracked in MLflow with hyperparameters, metrics (RMSPE), and artifacts
+- Best hyperparameters saved to `config/best_hyperparameters.json` for production use
+
+### 2. Model Registry & Lifecycle
+
+- **Registration**: Ensemble models registered to MLflow Model Registry with version numbers
+- **Staging Validation**: Auto-promote to "Staging" if RMSPE \< 0.10 threshold
+- **Manual Review**: Human reviews Staging model (predictions, metrics, business alignment)
+- **Production Promotion**: Manual approval required (`--promote-to-production` flag)
+- **Archival**: Previous Production model automatically archived when new version promoted
+- **Lineage Tracking**: Each model linked to data version (DVC hash) and training parameters
+
+### 3. Production Training & Inference
+
+- **Training**: `train_ensemble.py` loads best hyperparameters and trains production ensemble
+- **Validation**: `validate_model.py` evaluates performance and manages stage transitions
+- **Prediction**: `predict.py` loads models by stage (Staging/Production) for inference
+- **Retraining**: `retrain_pipeline.sh` orchestrates full workflow (data → features → training → validation)
+
+### 4. Key Design Principles
+
+- **Reproducibility**: All training uses versioned data (DVC) and tracked hyperparameters (MLflow)
+- **Automation with Safety**: Automated Staging promotion, manual Production approval
+- **Traceability**: Complete lineage from raw data → features → model → predictions
+- **Rollback Capability**: Archived models retained for quick rollback if issues arise
+
 ## Critical Implementation Rules
 
 ### Time-Series Validation (CRITICAL)
@@ -256,29 +368,40 @@ python -m src.models.train_advanced
 
 The project MUST be implemented phase by phase. Do not refactor working code unless needed.
 
-### Phase 0: Project Skeleton
+### Phase 0: Project Skeleton ✅ COMPLETED
 
 Create directory structure, README, requirements.txt, config/params.yaml, utility stubs, empty notebooks
 
-### Phase 1: Data Cleaning & EDA
+### Phase 1: Data Cleaning & EDA ✅ COMPLETED
 
 Implement `src/data/make_dataset.py`, populate notebook 01, output `train_clean.parquet`
 
-### Phase 2: Feature Engineering
+### Phase 2: Feature Engineering ✅ COMPLETED
 
 Implement `src/features/build_features.py`, populate notebook 02, output `train_features.parquet`
 
-### Phase 3: Baseline Models
+### Phase 3: Baseline Models ✅ COMPLETED
 
 Implement CV framework, baseline models, populate notebook 03, save baseline metrics
 
-### Phase 4: Advanced Models & Ensembles
+### Phase 4: Advanced Models & Ensembles ✅ COMPLETED
 
 Implement tuned models, ensemble methods, populate notebook 04, compare RMSPE
 
-### Phase 5: Final Evaluation
+### Phase 5: Final Evaluation ✅ COMPLETED
 
 Train final model on full data, evaluate on 6-week holdout, save predictions and metrics
+
+### Phase 6: ModelOps Production Infrastructure ✅ COMPLETED
+
+- MLflow experiment tracking integration (notebooks 03, 04, 05)
+- Optuna hyperparameter optimization with MLflow callbacks
+- Production training pipeline (`train_ensemble.py`)
+- Model Registry with stage-based lifecycle management
+- Automated validation and promotion workflows (`validate_model.py`)
+- Production inference pipeline (`predict.py`)
+- End-to-end retraining automation (`retrain_pipeline.sh`)
+- Comprehensive ModelOps documentation (docs/modelops/)
 
 ## Model Families to Explore
 
