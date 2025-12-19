@@ -98,7 +98,7 @@ class TestDataCleaning:
 
         # Fill with median (common strategy)
         median_dist = df["CompetitionDistance"].median()
-        df["CompetitionDistance"].fillna(median_dist, inplace=True)
+        df["CompetitionDistance"] = df["CompetitionDistance"].fillna(median_dist)
 
         assert df["CompetitionDistance"].isna().sum() == 0
 
@@ -161,8 +161,8 @@ class TestDataProcessingPipeline:
         merged_df = train_df.merge(store_df, on="Store", how="left")
 
         # 5. Basic cleaning
-        merged_df["CompetitionDistance"].fillna(
-            merged_df["CompetitionDistance"].median(), inplace=True
+        merged_df["CompetitionDistance"] = merged_df["CompetitionDistance"].fillna(
+            merged_df["CompetitionDistance"].median()
         )
 
         # 6. Save processed data

@@ -100,3 +100,87 @@ def temp_output_dir(tmp_path):
     output_dir = tmp_path / "outputs"
     output_dir.mkdir()
     return output_dir
+
+
+@pytest.fixture
+def sample_hyperparameters():
+    """Sample hyperparameters for ensemble models.
+
+    Returns
+    -------
+    dict
+        Hyperparameters for LightGBM, XGBoost, and CatBoost
+    """
+    return {
+        "lightgbm": {
+            "num_leaves": 31,
+            "learning_rate": 0.05,
+            "feature_fraction": 0.8,
+            "bagging_fraction": 0.7,
+            "bagging_freq": 5,
+            "max_depth": 6,
+            "min_child_samples": 20,
+            "reg_alpha": 0.1,
+            "reg_lambda": 0.1,
+        },
+        "xgboost": {
+            "max_depth": 6,
+            "learning_rate": 0.05,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "min_child_weight": 5,
+            "reg_alpha": 0.1,
+            "reg_lambda": 0.1,
+            "gamma": 0.01,
+        },
+        "catboost": {
+            "depth": 6,
+            "learning_rate": 0.05,
+            "l2_leaf_reg": 3.0,
+            "random_strength": 1.0,
+            "bagging_temperature": 0.5,
+            "border_count": 128,
+        },
+    }
+
+
+@pytest.fixture
+def mock_model_version():
+    """Create a mock MLflow ModelVersion object.
+
+    Returns
+    -------
+    Mock
+        Mock ModelVersion with common attributes
+    """
+    from unittest.mock import Mock
+
+    mv = Mock()
+    mv.name = "rossmann-ensemble"
+    mv.version = "1"
+    mv.current_stage = "Production"
+    mv.description = "Test ensemble model"
+    mv.run_id = "test-run-id-123"
+    mv.status = "READY"
+    mv.creation_timestamp = 1609459200000  # 2021-01-01
+    mv.last_updated_timestamp = 1609459200000
+    return mv
+
+
+@pytest.fixture
+def mock_registered_model():
+    """Create a mock MLflow RegisteredModel object.
+
+    Returns
+    -------
+    Mock
+        Mock RegisteredModel with common attributes
+    """
+    from unittest.mock import Mock
+
+    rm = Mock()
+    rm.name = "rossmann-ensemble"
+    rm.description = "Ensemble model for Rossmann sales forecasting"
+    rm.creation_timestamp = 1609459200000
+    rm.last_updated_timestamp = 1609459200000
+    return rm
