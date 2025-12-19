@@ -18,17 +18,23 @@ Complete installation and setup instructions for the Rossmann forecasting projec
 
 `uv` is a fast Python package manager that we use for dependency management.
 
-=== "pip (Recommended)" `bash     pip install uv     `
+=== "pip (Recommended)"
+    ```bash
+    pip install uv
+    ```
 
-=== "macOS/Linux (Standalone)" \`\`\`bash curl -LsSf https://astral.sh/uv/install.sh | sh
+=== "macOS/Linux (Standalone)"
+    ```bash
+    curl -LsSf https://astral.sh/uv/install.sh | sh
 
-````
-# After installation, restart your terminal or run:
-source $HOME/.cargo/env
-```
-````
+    # After installation, restart your terminal or run:
+    source $HOME/.cargo/env
+    ```
 
-=== "Windows PowerShell (Standalone)" `powershell     irm https://astral.sh/uv/install.ps1 | iex     `
+=== "Windows PowerShell (Standalone)"
+    ```powershell
+    irm https://astral.sh/uv/install.ps1 | iex
+    ```
 
 Verify installation:
 
@@ -109,23 +115,28 @@ Expected output:
 
 If you want to download the latest data directly from Kaggle, you can use these methods:
 
-=== "Kaggle CLI" \`\`\`bash # Install Kaggle CLI pip install kaggle
+=== "Kaggle CLI"
+    ```bash
+    # Install Kaggle CLI
+    pip install kaggle
 
-````
-# Configure API credentials (~/.kaggle/kaggle.json)
-# Download from: https://www.kaggle.com/settings
+    # Configure API credentials (~/.kaggle/kaggle.json)
+    # Download from: https://www.kaggle.com/settings
 
-# Download competition data
-kaggle competitions download -c rossmann-store-sales
+    # Download competition data
+    kaggle competitions download -c rossmann-store-sales
 
-# Extract to data/raw/
-unzip rossmann-store-sales.zip -d data/raw/
-```
-````
+    # Extract to data/raw/
+    unzip rossmann-store-sales.zip -d data/raw/
+    ```
 
-=== "Manual Download" 1. Visit [Kaggle competition page](https://www.kaggle.com/c/rossmann-store-sales/data) 2. Download `train.csv` and `store.csv` 3. Place in `data/raw/` directory
+=== "Manual Download"
+    1. Visit [Kaggle competition page](https://www.kaggle.com/c/rossmann-store-sales/data)
+    1. Download `train.csv` and `store.csv`
+    1. Place in `data/raw/` directory
 
-!!! note "Data Source" This project uses data from the [Kaggle Rossmann Store Sales competition](https://www.kaggle.com/c/rossmann-store-sales/data). The included data is for educational purposes.
+!!! note "Data Source"
+    This project uses data from the [Kaggle Rossmann Store Sales competition](https://www.kaggle.com/c/rossmann-store-sales/data). The included data is for educational purposes.
 
 ## Exploring MLOps Workflows
 
@@ -163,9 +174,10 @@ jupyter lab
 ```
 
 ```bash
-# Option B: Python Scripts (production approach)
-python -m src.models.train_baselines
-python -m src.models.train_advanced
+# Once you are done running the notebooks above, you can
+# run the python scripts to mimic production model training:
+python -m src.models.train_ensemble
+python -m src.models.validate_model
 ```
 
 **Learn more**: [Model Training Guide](../modelops/training.md)

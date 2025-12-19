@@ -4,6 +4,18 @@
 
 Hyperparameter tuning is performed using Optuna with MLflow integration in `notebooks/04-advanced-models-and-ensembles.ipynb`.
 
+**Training Time Considerations:**
+
+Tuning models on a local computer can be **time-intensive**—each model may take over an hour with 100+ trials using 5-fold cross-validation. To reduce training time:
+
+- **Reduce trials**: Use `n_trials=20` instead of `n_trials=100` for faster exploration
+- **Narrow search space**: Limit hyperparameter ranges based on domain knowledge
+- **Use fewer folds**: Reduce cross-validation from 5 folds to 3 folds
+- **Parallel execution**: Run tuning on multiple cores with `n_jobs` parameter
+- **Use pre-tuned parameters**: Load `config/best_hyperparameters.json` to skip tuning entirely
+
+For full experimentation, consider using cloud compute resources or running overnight.
+
 ## Tuning Workflow
 
 1. **Define objective function**: Function to minimize (CV RMSPE)

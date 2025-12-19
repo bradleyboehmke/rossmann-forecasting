@@ -42,11 +42,24 @@ python -c "import pandas, lightgbm; print('✓ Setup successful!')"
 
 Choose one to explore:
 
-=== "DataOps Pipeline" `bash     # Run complete data processing pipeline     bash scripts/dataops_workflow.sh     `
+=== "DataOps Pipeline"
+    ```bash
+    # Run complete data processing pipeline
+    bash scripts/dataops_workflow.sh
+    ```
 
-=== "Jupyter Notebooks" `bash     # Launch interactive notebooks     jupyter lab     # Open: notebooks/01-eda-and-cleaning.ipynb     `
+=== "Jupyter Notebooks"
+    ```bash
+    # Launch interactive notebooks
+    jupyter lab
+    # Open: notebooks/01-eda-and-cleaning.ipynb
+    ```
 
-=== "Model Training" `bash     # Train baseline models     python -m src.models.train_baselines     `
+=== "Model Training"
+    ```bash
+    # Train baseline models
+    python -m src.data.make_dataset
+    ```
 
 ## Next Steps
 
