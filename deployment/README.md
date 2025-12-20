@@ -2,6 +2,26 @@
 
 This directory contains deployment infrastructure for the Rossmann sales forecasting model, including a production-ready FastAPI backend and an interactive Streamlit dashboard.
 
+## Quick Start
+
+**Launch everything with one command:**
+
+```bash
+# From the project root
+bash scripts/launch_dashboard.sh
+```
+
+This script will:
+
+1. Start the FastAPI backend on http://localhost:8000 (if not already running)
+1. Wait for the API to be ready
+1. Launch the Streamlit dashboard on http://localhost:8501
+
+**To stop:**
+
+- Press `Ctrl+C` in the terminal to stop Streamlit
+- Stop FastAPI: `lsof -ti:8000 | xargs kill -9`
+
 ## Directory Structure
 
 ```
@@ -13,14 +33,13 @@ deployment/
 ├── streamlit/              # Streamlit dashboard
 │   ├── __init__.py
 │   ├── Home.py             # Main dashboard page
-│   ├── run_app.sh          # Quick start script
+│   ├── run_app.sh          # Streamlit-only launcher
 │   ├── utils/              # Shared utilities
 │   │   ├── api_client.py   # FastAPI client wrapper
 │   │   └── validation.py   # Input validation helpers
 │   └── pages/
-│       ├── 1_📈_Predictions.py         # Prediction interface (2 tabs)
-│       ├── 2_🔧_Model_Management.py    # Model lifecycle management
-│       └── 3_📚_Documentation.py       # API docs and guides
+│       ├── 1_📈_Predictions.py      # Prediction interface (2 tabs)
+│       └── 2_📚_Documentation.py    # API docs and guides
 └── README.md               # This file
 ```
 
