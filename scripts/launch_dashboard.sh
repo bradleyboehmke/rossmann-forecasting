@@ -1,6 +1,6 @@
 #!/bin/bash
 # Unified launcher for Rossmann Sales Forecasting Dashboard
-# Starts FastAPI backend and Streamlit frontend in sequence
+# Starts MLflow, FastAPI backend, and Streamlit frontend in sequence
 
 set -e  # Exit on any error
 
@@ -21,7 +21,71 @@ echo -e "${BLUE}  Rossmann Sales Forecasting Dashboard Launcher${NC}"
 echo -e "${BLUE}================================================${NC}"
 echo ""
 
-# Check if FastAPI is already running
+# ============================================================================
+# STEP 1: Start MLflow Tracking Server
+# ============================================================================
+if lsof -Pi :5000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    echo -e "${YELLOW}⚠️  MLflow server is already running on port 5000${NC}"
+    echo -e "${YELLOW}   Skipping MLflow launch...${NC}"
+    echo ""
+else
+    echo -e "${GREEN}🚀 Starting MLflow tracking server...${NC}"
+    echo -e "${BLUE}   URL: http://localhost:5000${NC}"
+    echo ""
+
+    # Parse MLflow configuration from params.yaml
+    cd "$PROJECT_ROOT"
+    TRACKING_URI=$(grep -A 10 "^mlflow:" config/params.yaml | grep "tracking_uri:" | awk '{print $2}')
+    ARTIFACT_LOCATION=$(grep -A 10 "^mlflow:" config/params.yaml | grep "artifact_location:" | awk '{print $2}')
+    HOST=$(grep -A 10 "^mlflow:" config/params.yaml | grep "host:" | awk '{print $2}')
+    PORT=$(grep -A 10 "^mlflow:" config/params.yaml | grep "port:" | awk '{print $2}')
+
+    # Use defaults if not found
+    TRACKING_URI=${TRACKING_URI:-./mlruns}
+    ARTIFACT_LOCATION=${ARTIFACT_LOCATION:-./mlartifacts}
+    HOST=${HOST:-127.0.0.1}
+    PORT=${PORT:-5000}
+
+    # Create directories if they don't exist
+    mkdir -p "$TRACKING_URI"
+    mkdir -p "$ARTIFACT_LOCATION"
+
+    # Start MLflow in background
+    nohup mlflow server \
+        --backend-store-uri "$TRACKING_URI" \
+        --default-artifact-root "$ARTIFACT_LOCATION" \
+        --host "$HOST" \
+        --port "$PORT" \
+        > /tmp/rossmann_mlflow.log 2>&1 &
+    MLFLOW_PID=$!
+
+    echo -e "${GREEN}   ✓ MLflow started (PID: $MLFLOW_PID)${NC}"
+    echo -e "${BLUE}   Logs: /tmp/rossmann_mlflow.log${NC}"
+    echo ""
+
+    # Wait for MLflow to be ready (max 15 seconds)
+    echo -e "${YELLOW}⏳ Waiting for MLflow to be ready...${NC}"
+    COUNTER=0
+    until curl -s http://localhost:5000 > /dev/null 2>&1 || [ $COUNTER -eq 15 ]; do
+        sleep 1
+        COUNTER=$((COUNTER + 1))
+        echo -ne "${YELLOW}   Waiting... ${COUNTER}s\r${NC}"
+    done
+    echo ""
+
+    if [ $COUNTER -eq 15 ]; then
+        echo -e "${RED}❌ MLflow failed to start within 15 seconds${NC}"
+        echo -e "${RED}   Check logs at: /tmp/rossmann_mlflow.log${NC}"
+        exit 1
+    fi
+
+    echo -e "${GREEN}   ✓ MLflow is ready!${NC}"
+    echo ""
+fi
+
+# ============================================================================
+# STEP 2: Start FastAPI Backend
+# ============================================================================
 if lsof -Pi :8000 -sTCP:LISTEN -t >/dev/null 2>&1 ; then
     echo -e "${YELLOW}⚠️  FastAPI server is already running on port 8000${NC}"
     echo -e "${YELLOW}   Skipping FastAPI launch...${NC}"
@@ -60,7 +124,9 @@ else
     echo ""
 fi
 
-# Launch Streamlit
+# ============================================================================
+# STEP 3: Launch Streamlit Dashboard (Foreground)
+# ============================================================================
 echo -e "${GREEN}🚀 Starting Streamlit dashboard...${NC}"
 echo -e "${BLUE}   URL: http://localhost:8501${NC}"
 echo ""
@@ -76,6 +142,8 @@ echo -e "${YELLOW}================================================${NC}"
 echo ""
 echo -e "${BLUE}Streamlit has been stopped.${NC}"
 echo ""
-echo -e "${YELLOW}FastAPI server is still running in the background.${NC}"
-echo -e "${YELLOW}To stop it, run: lsof -ti:8000 | xargs kill -9${NC}"
+echo -e "${YELLOW}MLflow and FastAPI servers are still running in the background.${NC}"
+echo -e "${YELLOW}To stop them, run:${NC}"
+echo -e "${YELLOW}  MLflow:  lsof -ti:5000 | xargs kill -9${NC}"
+echo -e "${YELLOW}  FastAPI: lsof -ti:8000 | xargs kill -9${NC}"
 echo ""
