@@ -8,10 +8,11 @@ from pathlib import Path
 
 import streamlit as st
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parents[2] / "src"))
+# Add utils to path
+streamlit_dir = Path(__file__).parent
+sys.path.insert(0, str(streamlit_dir / "utils"))
 
-from models.model_registry import get_model_version, list_registered_models
+from api_client import get_api_client
 
 # Page configuration
 st.set_page_config(
@@ -65,16 +66,76 @@ st.markdown(
 
 st.divider()
 
+# API Health Check
+api_client = get_api_client()
+health_response = api_client.health_check()
+
+if health_response:
+    api_status = "🟢 Online"
+    api_color = "#4caf50"
+else:
+    api_status = "🔴 Offline"
+    api_color = "#f44336"
+
+# System Status Section
+st.subheader("🖥️ System Status")
+
+status_col1, status_col2 = st.columns(2)
+
+with status_col1:
+    st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+    st.markdown(
+        f'<p style="font-size: 1.2rem; margin: 0;">FastAPI Server</p>'
+        f'<p style="font-size: 1.8rem; font-weight: bold; color: {api_color}; margin: 0;">{api_status}</p>',
+        unsafe_allow_html=True,
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+with status_col2:
+    if health_response:
+        model_loaded = health_response.get("model_loaded", False)
+        model_status = "✅ Loaded" if model_loaded else "⏳ Not Loaded"
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.markdown(
+            f'<p style="font-size: 1.2rem; margin: 0;">Model Cache</p>'
+            f'<p style="font-size: 1.8rem; font-weight: bold; margin: 0;">{model_status}</p>',
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+    else:
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.markdown(
+            '<p style="font-size: 1.2rem; margin: 0;">Model Cache</p>'
+            '<p style="font-size: 1.8rem; font-weight: bold; color: #999; margin: 0;">N/A</p>',
+            unsafe_allow_html=True,
+        )
+        st.markdown("</div>", unsafe_allow_html=True)
+
+st.divider()
+
 # Model Status Section
-st.subheader("🤖 Model Status")
+st.subheader("🤖 Model Registry")
 
 col1, col2, col3 = st.columns(3)
 
 try:
-    # Get current model versions
-    production_version = get_model_version("rossmann-ensemble", stage="Production")
-    staging_version = get_model_version("rossmann-ensemble", stage="Staging")
-    models = list_registered_models()
+    # Get current model versions from API only
+    if health_response:
+        model_info = api_client.get_model_info()
+        if model_info:
+            production_version = model_info.get("production_version")
+            staging_version = model_info.get("staging_version")
+            models = model_info.get("registered_models", [])
+        else:
+            # API is online but model info unavailable
+            production_version = None
+            staging_version = None
+            models = []
+    else:
+        # API is offline - cannot get model info
+        production_version = None
+        staging_version = None
+        models = []
 
     with col1:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
@@ -101,7 +162,18 @@ try:
 
 except Exception as e:
     st.error(f"Error loading model status: {str(e)}")
-    st.info("Make sure MLflow tracking server is running and models are registered.")
+    st.info("Make sure the FastAPI server is running and connected to MLflow.")
+
+# API Connection Help
+if not health_response:
+    st.divider()
+    st.warning(
+        "⚠️ **FastAPI server is not running.** "
+        "The Predictions page requires the API server to be active."
+    )
+    st.markdown("**To start the API server:**")
+    st.code("cd deployment/api && python main.py", language="bash")
+    st.info("The API will be available at http://localhost:8000")
 
 st.divider()
 
@@ -114,33 +186,30 @@ with feature_col1:
     st.markdown(
         """
         ### 📈 Predictions
-        - Generate single-store or batch predictions
-        - Interactive feature input with validation
-        - Real-time prediction results
-        - Export predictions to CSV
-
-        ### 📊 Model Monitoring
-        - Track model performance metrics
-        - View prediction history
-        - Monitor data drift and model health
-        - Compare model versions
+        - **Single Prediction**: Real-time forecasts for one store/date
+        - **Batch Upload**: Upload CSV with just 6 fields (DayOfWeek auto-calculated!)
+        - **Flexible Date Formats**: YYYY-MM-DD, MM/DD/YY, MM/DD/YYYY, etc.
+        - Automatic feature engineering via FastAPI
+        - Download results as CSV with predictions
+        - Store-level summaries and analytics
         """
     )
 
 with feature_col2:
     st.markdown(
         """
-        ### 🔧 Model Management
-        - View registered model versions
-        - Promote models through lifecycle stages
-        - Compare model performance
-        - Model validation and testing
+        ### 🚀 Easy to Use
+        - Simple train.csv format (no feature engineering needed!)
+        - Template CSV download for batch predictions
+        - Client-side validation before API calls
+        - Clear error messages and help text
+        - Production & Staging model selection
 
         ### 📚 Documentation
-        - API usage examples
+        - API usage examples and curl commands
         - Model architecture overview
-        - Feature engineering details
-        - Deployment guide
+        - Feature engineering pipeline details
+        - Deployment and integration guides
         """
     )
 
@@ -151,10 +220,11 @@ st.subheader("🚀 Quick Start")
 
 st.markdown(
     """
-    1. **Generate Predictions**: Navigate to the *Predictions* page to make forecasts for specific stores and dates
-    2. **Monitor Performance**: Check the *Model Monitoring* page to view metrics and performance trends
-    3. **Manage Models**: Use the *Model Management* page to view and promote model versions
-    4. **View Documentation**: Access the *Documentation* page for detailed guides and API references
+    1. **Start FastAPI Server**: Run `cd deployment/api && python main.py` (if not already running)
+    2. **Single Prediction**: Navigate to *Predictions* → *Single Prediction* tab for real-time forecasts
+    3. **Batch Upload**: Use *Predictions* → *Batch Upload* tab to process multiple predictions from CSV
+    4. **Download Template**: Get the CSV template to see the exact format required (6 fields)
+    5. **View Documentation**: Check *Documentation* page for API examples and integration guides
     """
 )
 

@@ -8,12 +8,17 @@ This directory contains deployment infrastructure for the Rossmann sales forecas
 deployment/
 ├── api/                    # FastAPI REST API
 │   ├── __init__.py
-│   └── main.py             # API server with prediction endpoints
+│   ├── main.py             # API server with prediction endpoints
+│   └── test_api.sh         # API testing script
 ├── streamlit/              # Streamlit dashboard
 │   ├── __init__.py
 │   ├── Home.py             # Main dashboard page
+│   ├── run_app.sh          # Quick start script
+│   ├── utils/              # Shared utilities
+│   │   ├── api_client.py   # FastAPI client wrapper
+│   │   └── validation.py   # Input validation helpers
 │   └── pages/
-│       ├── 1_📈_Predictions.py         # Prediction interface
+│       ├── 1_📈_Predictions.py         # Prediction interface (2 tabs)
 │       ├── 2_🔧_Model_Management.py    # Model lifecycle management
 │       └── 3_📚_Documentation.py       # API docs and guides
 └── README.md               # This file
@@ -45,16 +50,29 @@ Interactive multi-page web application for model monitoring and predictions:
 
 **Home Page** ([Home.py](streamlit/Home.py))
 
-- Model status overview (Production, Staging versions)
-- Feature summary and quick start guide
-- System information
+- **API Health Check**: Real-time FastAPI server status
+- **Model Registry**: Production/Staging version display
+- **System Status**: Model cache and server availability
+- **Quick Start Guide**: Step-by-step instructions
+- **Feature Overview**: Dashboard capabilities
 
 **Predictions Page** ([pages/1_📈_Predictions.py](streamlit/pages/1_%F0%9F%93%88_Predictions.py))
 
-- Single-store prediction with interactive form
-- Batch predictions from CSV upload
-- CSV template download
-- Export predictions to CSV
+- **Tab 1: Single Prediction**
+    - Real-time forecasts for one store/date
+    - Interactive form with simplified inputs (6 fields: Store, Date, Open, Promo, StateHoliday, SchoolHoliday)
+    - **Auto-calculates Day of Week** from selected date (no manual input needed!)
+    - Client-side validation before API call
+    - Instant prediction with interpretation guide
+- **Tab 2: Batch Upload**
+    - CSV upload with just **6 fields** (Store, Date, Open, Promo, StateHoliday, SchoolHoliday)
+    - **Auto-calculates Day of Week** from Date column (no manual input needed!)
+    - **Flexible date formats** accepted (YYYY-MM-DD, MM/DD/YY, MM/DD/YYYY, etc.)
+    - Template CSV download with sample data
+    - Automatic date normalization to YYYY-MM-DD format
+    - Batch validation and processing via API
+    - Results export with store-level summaries (includes DayOfWeek column)
+    - **Key Feature**: API automatically handles store metadata merge, data cleaning, and feature engineering
 
 **Model Management Page** ([pages/2_🔧_Model_Management.py](streamlit/pages/2_%F0%9F%94%A7_Model_Management.py))
 
@@ -139,9 +157,86 @@ cd deployment/streamlit
 streamlit run Home.py
 ```
 
+**Option 3: Quick start script**:
+
+```bash
+cd deployment/streamlit
+./run_app.sh
+```
+
 The dashboard will be available at:
 
 - **Dashboard**: http://localhost:8501
+
+### Using the Streamlit Dashboard
+
+#### 1. Check System Status
+
+On the **Home** page, verify:
+
+- ✅ FastAPI Server is "🟢 Online"
+- ✅ Model Cache shows a loaded model
+- ✅ Production and Staging versions are displayed
+
+If the API is offline, start it first (see instructions above).
+
+#### 2. Single Prediction Workflow
+
+Navigate to **Predictions** → **Single Prediction** tab:
+
+1. Fill in the required fields:
+
+    - Store ID (1-1115)
+    - Prediction Date (Day of Week is **auto-calculated** from the date)
+    - Store Open? (Yes/No)
+    - State Holiday type
+    - Promotion Active? (Yes/No)
+    - School Holiday? (Yes/No)
+
+1. Click **🚀 Generate Prediction**
+
+1. View results:
+
+    - Predicted sales amount
+    - Model version used
+    - Input summary
+    - Interpretation guide
+
+#### 3. Batch Upload Workflow
+
+Navigate to **Predictions** → **Batch Upload** tab:
+
+1. **Download Template**:
+
+    - Click "📥 Download Template" to get the CSV format
+    - Template shows the exact **6 fields** required (DayOfWeek auto-calculated!)
+
+1. **Prepare Your Data**:
+
+    - Fill in your data matching the template format
+    - Required columns: `Store, Date, Open, Promo, StateHoliday, SchoolHoliday`
+    - **Date format is flexible**: YYYY-MM-DD, MM/DD/YY, MM/DD/YYYY all work!
+    - **No need to calculate DayOfWeek** - it's done automatically
+
+1. **Upload CSV**:
+
+    - Click "Upload CSV file" and select your file
+    - Streamlit will validate the CSV automatically
+    - Dates are normalized to YYYY-MM-DD format
+    - DayOfWeek column is added automatically
+    - Preview the processed data (first 10 rows)
+
+1. **Generate Predictions**:
+
+    - Click **🚀 Generate N Predictions** button
+    - Wait for API processing (progress spinner shown)
+    - View prediction summary and results table
+
+1. **Export Results**:
+
+    - Click "📥 Download Predictions CSV" to save results
+    - Results include: original fields + `DayOfWeek` + `Predicted_Sales`
+    - Optionally view store-level summary (grouped statistics)
 
 ## API Usage Examples
 

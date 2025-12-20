@@ -1,7 +1,7 @@
 """Streamlit Predictions page for generating sales forecasts.
 
-This page provides an interactive interface for making single or batch predictions using the
-deployed Rossmann forecasting model.
+This page provides an interactive interface for making single or batch predictions using the FastAPI
+backend and the deployed Rossmann forecasting model.
 """
 
 import sys
@@ -11,271 +11,437 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-# Add src to path
-sys.path.insert(0, str(Path(__file__).parents[3] / "src"))
+# Add parent directories to path
+streamlit_dir = Path(__file__).parents[1]
+sys.path.insert(0, str(streamlit_dir / "utils"))
 
-from models.model_registry import get_model_version, load_model
+from api_client import get_api_client
+from validation import (
+    get_csv_template,
+    process_batch_csv,
+    validate_batch_csv,
+    validate_single_prediction_input,
+)
 
+# Page configuration
 st.set_page_config(page_title="Predictions", page_icon="📈", layout="wide")
 
-st.title("📈 Sales Predictions")
+# Initialize API client
+api_client = get_api_client()
 
+# Header
+st.title("📈 Sales Predictions")
 st.markdown(
     """
     Generate sales predictions for Rossmann stores using the production ensemble model.
-    You can make single predictions or upload a CSV file for batch predictions.
+    Upload data in **train.csv format** (7 fields only) - the API handles all feature engineering.
     """
 )
 
-# Sidebar for model selection
+# Sidebar - Model Configuration
 with st.sidebar:
-    st.header("Model Configuration")
+    st.header("⚙️ Model Configuration")
 
-    model_stage = st.selectbox("Select Model Stage", ["Production", "Staging"], index=0)
+    model_stage = st.selectbox(
+        "Model Stage",
+        ["Production", "Staging"],
+        index=0,
+        help="Select which model version to use for predictions",
+    )
 
-    try:
-        current_version = get_model_version("rossmann-ensemble", stage=model_stage)
-        if current_version:
-            st.success(f"✓ Model v{current_version} loaded")
+    # Get model info
+    st.divider()
+    st.subheader("📊 Model Status")
+
+    with st.spinner("Checking model status..."):
+        model_info = api_client.get_model_info()
+
+    if model_info:
+        if model_stage == "Production":
+            version = model_info.get("production_version")
         else:
-            st.error(f"No {model_stage} model found")
+            version = model_info.get("staging_version")
+
+        if version:
+            st.success(f"✓ {model_stage} v{version}")
+        else:
+            st.error(f"❌ No {model_stage} model available")
             st.stop()
-    except Exception as e:
-        st.error(f"Error loading model: {str(e)}")
+
+        # Show all registered models
+        with st.expander("View All Models"):
+            st.write("**Registered Models:**")
+            for model in model_info.get("registered_models", []):
+                st.write(f"- {model}")
+    else:
+        st.error("Cannot connect to API. Please start the FastAPI server.")
+        st.code("cd deployment/api && python main.py", language="bash")
         st.stop()
 
 st.divider()
 
-# Prediction Mode Selection
-prediction_mode = st.radio(
-    "Prediction Mode",
-    ["Single Prediction", "Batch Prediction (CSV)"],
-    horizontal=True,
-)
+# Prediction Mode Tabs
+tab1, tab2 = st.tabs(["🔮 Single Prediction", "📦 Batch Upload"])
 
-if prediction_mode == "Single Prediction":
+# ============================================================================
+# TAB 1: Single Real-Time Prediction
+# ============================================================================
+with tab1:
     st.subheader("🔮 Single Store Prediction")
-
-    # Create input form
-    with st.form("prediction_form"):
-        col1, col2, col3 = st.columns(3)
-
-        with col1:
-            st.markdown("**Store Information**")
-            store = st.number_input("Store ID", min_value=1, max_value=1115, value=1, step=1)
-            store_type = st.selectbox("Store Type", ["a", "b", "c", "d"], index=0)
-            assortment = st.selectbox("Assortment", ["a", "b", "c"], index=0)
-
-        with col2:
-            st.markdown("**Date & Calendar**")
-            prediction_date = st.date_input("Prediction Date", value=datetime.now().date())
-            day_of_week = st.number_input("Day of Week (1=Mon)", min_value=1, max_value=7, value=1)
-            school_holiday = st.selectbox("School Holiday", [0, 1], index=0)
-            state_holiday = st.selectbox("State Holiday", ["0", "a", "b", "c"], index=0)
-
-        with col3:
-            st.markdown("**Promotions**")
-            promo = st.selectbox("Promo Active", [0, 1], index=0)
-            promo2 = st.selectbox("Promo2 Participation", [0, 1], index=0)
-            promo_interval = st.text_input("Promo Interval", value="")
-
-        col4, col5 = st.columns(2)
-
-        with col4:
-            st.markdown("**Competition**")
-            competition_distance = st.number_input(
-                "Competition Distance (m)", min_value=0.0, value=1000.0, step=100.0
-            )
-            comp_open_since_month = st.number_input(
-                "Competition Open Since Month", min_value=0, max_value=12, value=0
-            )
-            comp_open_since_year = st.number_input(
-                "Competition Open Since Year", min_value=0, max_value=2025, value=0
-            )
-
-        with col5:
-            st.markdown("**Additional Features**")
-            is_open = st.selectbox("Store Open", [0, 1], index=1)
-            promo2_since_week = st.number_input(
-                "Promo2 Since Week", min_value=0, max_value=52, value=0
-            )
-            promo2_since_year = st.number_input(
-                "Promo2 Since Year", min_value=0, max_value=2025, value=0
-            )
-
-        submit_button = st.form_submit_button("🔮 Generate Prediction", use_container_width=True)
-
-    if submit_button:
-        try:
-            # Load model
-            with st.spinner("Loading model..."):
-                model = load_model("rossmann-ensemble", stage=model_stage)
-
-            # Prepare features
-            features = pd.DataFrame(
-                {
-                    "Store": [store],
-                    "DayOfWeek": [day_of_week],
-                    "Open": [is_open],
-                    "Promo": [promo],
-                    "StateHoliday": [state_holiday],
-                    "SchoolHoliday": [school_holiday],
-                    "StoreType": [store_type],
-                    "Assortment": [assortment],
-                    "CompetitionDistance": [
-                        competition_distance if competition_distance > 0 else None
-                    ],
-                    "CompetitionOpenSinceMonth": [
-                        comp_open_since_month if comp_open_since_month > 0 else None
-                    ],
-                    "CompetitionOpenSinceYear": [
-                        comp_open_since_year if comp_open_since_year > 0 else None
-                    ],
-                    "Promo2": [promo2],
-                    "Promo2SinceWeek": [promo2_since_week if promo2_since_week > 0 else None],
-                    "Promo2SinceYear": [promo2_since_year if promo2_since_year > 0 else None],
-                    "PromoInterval": [promo_interval if promo_interval else None],
-                    "Year": [prediction_date.year],
-                    "Month": [prediction_date.month],
-                    "Week": [prediction_date.isocalendar()[1]],
-                    "Day": [prediction_date.day],
-                }
-            )
-
-            # Convert categorical columns
-            categorical_cols = ["StoreType", "Assortment", "StateHoliday", "PromoInterval"]
-            for col in categorical_cols:
-                features[col] = features[col].astype("category")
-
-            # Generate prediction
-            with st.spinner("Generating prediction..."):
-                prediction = model.predict(features)
-
-            # Display result
-            st.success("✅ Prediction Complete!")
-
-            result_col1, result_col2, result_col3 = st.columns(3)
-
-            with result_col1:
-                st.metric(
-                    label="Predicted Sales",
-                    value=f"${prediction[0]:,.2f}",
-                    delta=None,
-                )
-
-            with result_col2:
-                st.metric(label="Store ID", value=store)
-
-            with result_col3:
-                st.metric(label="Date", value=prediction_date.strftime("%Y-%m-%d"))
-
-            # Show feature summary
-            with st.expander("📊 View Input Features"):
-                st.dataframe(features, use_container_width=True)
-
-        except Exception as e:
-            st.error(f"Prediction error: {str(e)}")
-
-else:
-    # Batch Prediction Mode
-    st.subheader("📦 Batch Predictions from CSV")
-
     st.markdown(
         """
-        Upload a CSV file with the required features to generate batch predictions.
-        The CSV must include all required columns with proper formatting.
+        Enter data for **one store and date** to get an instant sales forecast.
+        Day of Week is **auto-calculated** from the date. The API automatically handles store metadata and feature engineering.
         """
     )
 
-    # Download sample CSV template
-    if st.button("📥 Download CSV Template"):
-        template_data = {
-            "Store": [1, 2, 3],
-            "DayOfWeek": [1, 2, 3],
-            "Open": [1, 1, 1],
-            "Promo": [0, 1, 0],
-            "StateHoliday": ["0", "0", "a"],
-            "SchoolHoliday": [0, 0, 1],
-            "StoreType": ["a", "b", "c"],
-            "Assortment": ["a", "b", "c"],
-            "CompetitionDistance": [1000.0, 2000.0, 1500.0],
-            "CompetitionOpenSinceMonth": [1, 2, 3],
-            "CompetitionOpenSinceYear": [2015, 2015, 2015],
-            "Promo2": [0, 1, 1],
-            "Promo2SinceWeek": [0, 1, 1],
-            "Promo2SinceYear": [0, 2015, 2015],
-            "PromoInterval": ["", "Feb,May,Aug,Nov", "Jan,Apr,Jul,Oct"],
-            "Year": [2015, 2015, 2015],
-            "Month": [7, 7, 7],
-            "Week": [28, 28, 28],
-            "Day": [1, 2, 3],
-        }
-        template_df = pd.DataFrame(template_data)
-        csv = template_df.to_csv(index=False)
+    # Create input form
+    with st.form("single_prediction_form"):
+        col1, col2, col3 = st.columns(3)
+
+        with col1:
+            st.markdown("**📍 Store & Date**")
+            store_id = st.number_input(
+                "Store ID",
+                min_value=1,
+                max_value=1115,
+                value=1,
+                step=1,
+                help="Store identifier (1-1115)",
+            )
+
+            prediction_date = st.date_input(
+                "Date to Predict",
+                value=datetime(2015, 8, 1).date(),
+                help="Date to predict sales for - Day of Week will be calculated automatically",
+            )
+
+        with col2:
+            st.markdown("**🏪 Store Status**")
+            is_open = st.selectbox(
+                "Store Open?",
+                options=[1, 0],
+                format_func=lambda x: "✅ Open" if x == 1 else "❌ Closed",
+                help="Is the store open on this date?",
+            )
+
+            state_holiday = st.selectbox(
+                "State Holiday",
+                options=["0", "a", "b", "c"],
+                format_func=lambda x: {
+                    "0": "No Holiday",
+                    "a": "Public Holiday",
+                    "b": "Easter Holiday",
+                    "c": "Christmas",
+                }[x],
+                help="Type of state holiday",
+            )
+
+        with col3:
+            st.markdown("**🎯 Promotions & School**")
+            promo = st.selectbox(
+                "Promotion Active?",
+                options=[0, 1],
+                format_func=lambda x: "✅ Yes" if x == 1 else "❌ No",
+                help="Is a promotion running?",
+            )
+
+            school_holiday = st.selectbox(
+                "School Holiday?",
+                options=[0, 1],
+                format_func=lambda x: "✅ Yes" if x == 1 else "❌ No",
+                help="Is it a school holiday?",
+            )
+
+        # Submit button
+        st.divider()
+        submit_button = st.form_submit_button(
+            "🚀 Generate Prediction",
+            type="primary",
+        )
+
+    # Handle form submission
+    if submit_button:
+        # Convert date to string
+        date_str = prediction_date.strftime("%Y-%m-%d")
+
+        # Auto-calculate day of week from selected date
+        # Python's weekday(): Monday=0, Sunday=6
+        # We need: Monday=1, Sunday=7
+        day_of_week = prediction_date.weekday() + 1
+
+        # Day names for display
+        day_names = [
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+            "Friday",
+            "Saturday",
+            "Sunday",
+        ]
+
+        # Validate inputs
+        is_valid, errors = validate_single_prediction_input(
+            store=store_id,
+            day_of_week=day_of_week,
+            date=date_str,
+            open_flag=is_open,
+            promo=promo,
+            state_holiday=state_holiday,
+            school_holiday=school_holiday,
+        )
+
+        if not is_valid:
+            st.error("❌ Validation Error:")
+            for error in errors:
+                st.error(f"- {error}")
+        else:
+            # Make API request
+            with st.spinner("🔮 Generating prediction..."):
+                response = api_client.predict_single(
+                    store=store_id,
+                    day_of_week=day_of_week,
+                    date=date_str,
+                    open_flag=is_open,
+                    promo=promo,
+                    state_holiday=state_holiday,
+                    school_holiday=school_holiday,
+                    model_stage=model_stage,
+                )
+
+            if response:
+                st.success("✅ Prediction Complete!")
+
+                # Display prediction result
+                predictions = response["predictions"]
+                predicted_sales = predictions[0]
+
+                # Metrics display - 5 columns
+                metric_col1, metric_col2, metric_col3, metric_col4, metric_col5 = st.columns(5)
+
+                with metric_col1:
+                    st.metric(
+                        label="💰 Predicted Sales",
+                        value=f"${predicted_sales:,.2f}",
+                    )
+
+                with metric_col2:
+                    st.metric(label="🏪 Store ID", value=store_id)
+
+                with metric_col3:
+                    st.metric(label="📅 Date", value=date_str)
+
+                with metric_col4:
+                    st.metric(
+                        label="📆 Day of Week",
+                        value=f"{day_names[day_of_week - 1]} ({day_of_week})",
+                    )
+
+                with metric_col5:
+                    st.metric(label="🤖 Model Version", value=f"v{response['model_version']}")
+
+                # Show input summary
+                st.divider()
+                with st.expander("📋 View Input Details"):
+                    input_df = pd.DataFrame(
+                        {
+                            "Store": [store_id],
+                            "DayOfWeek": [day_of_week],
+                            "Date": [date_str],
+                            "Open": [is_open],
+                            "Promo": [promo],
+                            "StateHoliday": [state_holiday],
+                            "SchoolHoliday": [school_holiday],
+                        }
+                    )
+                    st.dataframe(input_df)
+
+                # Interpretation guide
+                with st.expander("💡 How to Interpret This Prediction"):
+                    st.markdown(
+                        f"""
+                        **Predicted Sales:** ${predicted_sales:,.2f}
+
+                        This prediction is based on:
+                        - Historical sales patterns for Store {store_id}
+                        - Day of week effects ({["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"][day_of_week-1]})
+                        - Promotion status ({'Active' if promo else 'None'})
+                        - Holiday effects ({state_holiday if state_holiday != '0' else 'None'})
+                        - Store metadata (type, assortment, competition)
+                        - Engineered time-series features (lags, rolling averages)
+
+                        **Model:** {model_stage} ensemble (LightGBM 30% + XGBoost 60% + CatBoost 10%)
+                        """
+                    )
+
+
+# ============================================================================
+# TAB 2: Batch Upload
+# ============================================================================
+with tab2:
+    st.subheader("📦 Batch Predictions from CSV")
+    st.markdown(
+        """
+        Upload a CSV file with just **6 fields** - Day of Week is auto-calculated from Date!
+        Dates can be in any common format (YYYY-MM-DD, MM/DD/YY, MM/DD/YYYY, etc.).
+        The API will automatically merge store metadata, clean data, and engineer features.
+        """
+    )
+
+    # CSV Template Download
+    st.markdown("### 📥 Step 1: Download Template")
+    st.info(
+        "👉 Download the template CSV to see the exact format required. "
+        "Fill in your data and upload it below."
+    )
+
+    template_df = get_csv_template()
+
+    col1, col2 = st.columns([2, 1])
+    with col1:
+        st.dataframe(template_df)
+    with col2:
+        csv_template = template_df.to_csv(index=False)
         st.download_button(
-            label="Download Template",
-            data=csv,
-            file_name="prediction_template.csv",
+            label="📥 Download Template",
+            data=csv_template,
+            file_name="rossmann_prediction_template.csv",
             mime="text/csv",
         )
 
-    # File upload
-    uploaded_file = st.file_uploader("Upload CSV file", type=["csv"])
+    st.divider()
+
+    # CSV Upload
+    st.markdown("### 📤 Step 2: Upload Your Data")
+
+    uploaded_file = st.file_uploader(
+        "Upload CSV file",
+        type=["csv"],
+        help="CSV must have columns: Store, Date, Open, Promo, StateHoliday, SchoolHoliday (DayOfWeek auto-calculated)",
+    )
 
     if uploaded_file is not None:
         try:
             # Read CSV
             input_df = pd.read_csv(uploaded_file)
 
-            st.info(f"Loaded {len(input_df)} rows from CSV")
+            st.success(f"✅ Loaded {len(input_df)} rows from CSV")
 
-            # Show preview
-            with st.expander("📋 Preview Input Data"):
-                st.dataframe(input_df.head(10), use_container_width=True)
+            # Validate CSV
+            is_valid, errors = validate_batch_csv(input_df)
 
-            if st.button("🚀 Generate Batch Predictions", use_container_width=True):
-                with st.spinner("Generating predictions..."):
-                    # Load model
-                    model = load_model("rossmann-ensemble", stage=model_stage)
+            if not is_valid:
+                st.error("❌ CSV Validation Failed:")
+                for error in errors:
+                    st.error(f"- {error}")
+            else:
+                st.success("✅ CSV validation passed!")
 
-                    # Convert categorical columns
-                    categorical_cols = ["StoreType", "Assortment", "StateHoliday", "PromoInterval"]
-                    for col in categorical_cols:
-                        if col in input_df.columns:
-                            input_df[col] = input_df[col].astype("category")
-
-                    # Generate predictions
-                    predictions = model.predict(input_df)
-
-                    # Add predictions to dataframe
-                    result_df = input_df.copy()
-                    result_df["Predicted_Sales"] = predictions
-
-                    st.success(f"✅ Generated {len(predictions)} predictions!")
-
-                    # Display results
-                    st.subheader("📊 Prediction Results")
-
-                    col1, col2, col3 = st.columns(3)
-                    with col1:
-                        st.metric("Total Predictions", len(predictions))
-                    with col2:
-                        st.metric("Avg Predicted Sales", f"${predictions.mean():,.2f}")
-                    with col3:
-                        st.metric("Total Predicted Sales", f"${predictions.sum():,.2f}")
-
-                    # Show results table
-                    st.dataframe(result_df, use_container_width=True)
-
-                    # Download results
-                    csv = result_df.to_csv(index=False)
-                    st.download_button(
-                        label="📥 Download Predictions CSV",
-                        data=csv,
-                        file_name=f"predictions_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
-                        mime="text/csv",
-                        use_container_width=True,
+                # Process CSV: normalize dates and add DayOfWeek
+                try:
+                    processed_df = process_batch_csv(input_df)
+                    st.info(
+                        "✨ Dates normalized to YYYY-MM-DD format and Day of Week auto-calculated!"
                     )
+                except Exception as e:
+                    st.error(f"Error processing dates: {str(e)}")
+                    st.stop()
+
+                # Show preview of processed data
+                with st.expander("📋 Preview Processed Data (first 10 rows)"):
+                    st.dataframe(processed_df.head(10))
+
+                # Generate predictions button
+                st.divider()
+                if st.button(
+                    f"🚀 Generate {len(processed_df)} Predictions",
+                    type="primary",
+                ):
+                    # Make API request with processed data
+                    with st.spinner(f"Generating predictions for {len(processed_df)} records..."):
+                        response = api_client.predict_batch(
+                            data=processed_df,
+                            model_stage=model_stage,
+                        )
+
+                    if response:
+                        st.success(f"✅ Successfully generated {response['count']} predictions!")
+
+                        # Extract predictions
+                        predictions = response["predictions"]
+                        model_version = response["model_version"]
+
+                        # Add predictions to processed dataframe (includes DayOfWeek)
+                        result_df = processed_df.copy()
+                        result_df["Predicted_Sales"] = predictions
+
+                        # Summary metrics
+                        st.divider()
+                        st.subheader("📊 Prediction Summary")
+
+                        metric_col1, metric_col2, metric_col3, metric_col4 = st.columns(4)
+
+                        with metric_col1:
+                            st.metric("Total Predictions", f"{len(predictions):,}")
+
+                        with metric_col2:
+                            st.metric("Total Predicted Sales", f"${sum(predictions):,.2f}")
+
+                        with metric_col3:
+                            st.metric("Average Sales", f"${sum(predictions)/len(predictions):,.2f}")
+
+                        with metric_col4:
+                            st.metric("Model Version", f"v{model_version}")
+
+                        # Results table
+                        st.divider()
+                        st.subheader("📋 Prediction Results")
+                        st.dataframe(
+                            result_df,
+                            height=400,
+                        )
+
+                        # Download results
+                        st.divider()
+                        st.subheader("💾 Export Results")
+
+                        csv_output = result_df.to_csv(index=False)
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+                        st.download_button(
+                            label="📥 Download Predictions CSV",
+                            data=csv_output,
+                            file_name=f"rossmann_predictions_{timestamp}.csv",
+                            mime="text/csv",
+                        )
+
+                        # Store-level summary
+                        with st.expander("📊 View Store-Level Summary"):
+                            store_summary = (
+                                result_df.groupby("Store")["Predicted_Sales"]
+                                .agg(["count", "sum", "mean"])
+                                .round(2)
+                            )
+                            store_summary.columns = [
+                                "Num Predictions",
+                                "Total Sales",
+                                "Avg Sales",
+                            ]
+                            st.dataframe(store_summary)
 
         except Exception as e:
-            st.error(f"Error processing file: {str(e)}")
+            st.error(f"❌ Error processing file: {str(e)}")
+            st.info("Please ensure your CSV matches the template format.")
+
+# Footer
+st.divider()
+st.markdown(
+    """
+    <div style='text-align: center; color: #666; padding: 1rem;'>
+        <p>💡 <b>Tip:</b> For large batch predictions, use the FastAPI directly via curl or Python requests</p>
+        <p>See the <b>Documentation</b> page for API examples</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
