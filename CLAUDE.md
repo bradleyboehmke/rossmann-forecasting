@@ -156,6 +156,17 @@ python -m src.features.build_features
 - `basic_cleaning()`: Handle missing values, convert dtypes, parse dates
 - `save_processed_data()`: Output to parquet using `save_parquet()` utility
 
+**src/data/prepare_predictions.py** ⭐ NEW
+
+- `prepare_prediction_data()`: Unified pipeline for preparing raw data for predictions
+    - Accepts raw data in train.csv format (7 fields: Store, DayOfWeek, Date, Open, Promo, StateHoliday, SchoolHoliday)
+    - Automatically merges with store metadata, cleans data, engineers features
+    - Returns model-ready features (46 columns, excludes Sales/Date/Store/Customers)
+    - Ensures consistency between training and inference data processing
+- `validate_input_data()`: Validates raw input data for required columns, types, and ranges
+- `prepare_prediction_data_from_csv()`: Convenience wrapper to load and prepare data from CSV
+- **Used by**: FastAPI deployment, batch prediction scripts, any inference workflow
+
 **src/features/build_features.py**
 
 - `add_calendar_features()`: Year, month, week, day-of-week, seasonality
