@@ -106,6 +106,24 @@ python src/models/predict.py --stage Production
 bash scripts/retrain_pipeline.sh
 ```
 
+### Deployment Services
+
+```bash
+# Launch all deployment services (MLflow, FastAPI, Streamlit)
+bash scripts/launch_dashboard.sh
+# Opens: MLflow (5000), FastAPI (8000), Streamlit (8501)
+
+# Launch individual services
+bash scripts/launch_api.sh        # FastAPI only
+bash scripts/launch_streamlit.sh  # Streamlit only
+bash scripts/start_mlflow.sh      # MLflow only
+
+# Stop background services
+lsof -ti:5000 | xargs kill -9  # Stop MLflow
+lsof -ti:8000 | xargs kill -9  # Stop FastAPI
+# Streamlit: Ctrl+C (runs in foreground)
+```
+
 ### Running Individual Modules
 
 ```bash
@@ -137,6 +155,20 @@ python -m src.features.build_features
 1. **Manual review** → MLflow UI inspection, inference testing
 1. **Promote to Production** → `validate_model.py --promote-to-production`
 1. **Generate predictions** (`src/models/predict.py`) → Load model by stage, save predictions
+
+**Deployment Architecture (Production Serving):**
+
+1. **MLflow Model Registry** (Port 5000) → Centralized model storage and versioning
+1. **FastAPI Service** (Port 8000) → REST API for model predictions
+    - Loads Production model on startup
+    - Accepts 7 simple fields (train.csv format)
+    - Auto-applies 46 feature transformations
+    - Returns predictions with model version
+1. **Streamlit Dashboard** (Port 8501) → User-friendly web interface
+    - Single prediction: Interactive form for one store/date
+    - Batch upload: CSV file processing for multiple predictions
+    - System health monitoring and model registry status
+1. **Unified Launcher** → `scripts/launch_dashboard.sh` starts all services with health checks
 
 ### Module Responsibilities
 
@@ -233,6 +265,34 @@ python -m src.features.build_features
 - Saves predictions to CSV with timestamps
 - Command-line interface: `--stage`, `--output`, `--data-path` options
 
+### Deployment Services
+
+**deployment/api/** - FastAPI Prediction Service
+
+- `main.py`: FastAPI application with startup model loading and prediction endpoints
+- `model_manager.py`: Abstraction for MLflow model loading and prediction orchestration
+- `schemas.py`: Pydantic models for request/response validation (train.csv format)
+- Endpoints: `/health`, `/model/info`, `/predict`, `/model/load`
+- Loads Production model on startup, caches in memory for fast inference
+- Accepts 7 simple fields, auto-applies 46 feature transformations via `prepare_prediction_data()`
+
+**deployment/streamlit/** - Streamlit Dashboard
+
+- `Home.py`: Landing page with system status, model registry, and quick start guide
+- `pages/1_📈_Predictions.py`: Single and batch prediction interfaces
+- `pages/2_📚_Documentation.py`: API reference and integration examples
+- `utils/api_client.py`: FastAPI client abstraction with error handling
+- `utils/validation.py`: Client-side input validation and CSV template generation
+- Multi-page app architecture with automatic navigation
+
+**scripts/** - Automation Scripts
+
+- `launch_dashboard.sh`: Unified launcher for MLflow, FastAPI, and Streamlit with health checks
+- `launch_api.sh`: Standalone FastAPI launcher with dependency checking
+- `launch_streamlit.sh`: Standalone Streamlit launcher
+- `start_mlflow.sh`: MLflow tracking server launcher
+- Smart port detection, health check timeouts, and background process management
+
 ### Configuration
 
 **config/params.yaml** - Central configuration for:
@@ -306,6 +366,18 @@ python -m src.features.build_features
 - Designed for scheduled execution (cron, Airflow) or manual triggers
 - Requires manual review before Production promotion (human-in-the-loop safety)
 - Run with `bash scripts/retrain_pipeline.sh`
+
+**Documentation** (`docs/` + MkDocs)
+
+- Comprehensive documentation in `docs/` directory organized by workflow phase
+- **Deployment docs** (`docs/deployment/`):
+    - `overview.md`: Architecture, data flow diagrams, prerequisites
+    - `fastapi.md`: API endpoints, feature pipeline, error handling
+    - `streamlit.md`: UI features with screenshots (home, single/batch predictions)
+    - `launcher.md`: Unified launcher process flow and troubleshooting
+- **API docs** (`docs/api/`): Auto-generated from code docstrings
+- **DataOps/ModelOps docs**: Getting started guides and best practices
+- Build with `mkdocs build`, serve with `mkdocs serve` (http://localhost:8000)
 
 ## ModelOps Workflow
 
