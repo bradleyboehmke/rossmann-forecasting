@@ -94,6 +94,11 @@ nav:
       - Model Training: modelops/training.md
       - Model Registry: modelops/registry.md
       - Hyperparameter Tuning: modelops/tuning.md
+  - Deployment:
+      - Overview: deployment/overview.md
+      - FastAPI Service: deployment/fastapi.md
+      - Streamlit Dashboard: deployment/streamlit.md
+      - Launcher Script: deployment/launcher.md
   - API Reference:
       - Data: api/data.md
       - Features: api/features.md
