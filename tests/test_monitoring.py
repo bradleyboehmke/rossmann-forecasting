@@ -66,8 +66,8 @@ def sample_features():
     """
     return pd.DataFrame(
         {
-            "month": [1, 1, 1],
-            "year": [2015, 2015, 2015],
+            "Month": [1, 1, 1],
+            "Year": [2015, 2015, 2015],
             "StoreType": ["c", "c", "a"],
             "Assortment": ["a", "a", "c"],
             "CompetitionDistance": [1270.0, 1270.0, 570.0],
