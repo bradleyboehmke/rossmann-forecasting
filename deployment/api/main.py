@@ -9,6 +9,7 @@ This module provides a REST API for:
 import logging
 import os
 import sys
+import time
 from datetime import datetime
 from pathlib import Path
 
@@ -26,6 +27,8 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 MLFLOW_TRACKING_URI = os.getenv("MLFLOW_TRACKING_URI", f"file://{PROJECT_ROOT}/mlruns")
 mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+# Import prediction logger
+from prediction_logger import PredictionLogger
 from utils.io import read_csv
 
 from data.prepare_predictions import prepare_prediction_data, validate_input_data
@@ -38,6 +41,9 @@ _model_cache = {"model": None, "version": None, "stage": None, "loaded_at": None
 
 # Global store metadata cache (loaded once at startup)
 _store_metadata = None
+
+# Global prediction logger
+_prediction_logger = None
 
 # Initialize FastAPI app
 app = FastAPI(
@@ -164,13 +170,22 @@ def get_or_load_model(stage: str = "Production"):
 @app.on_event("startup")
 async def startup_event():
     """Log startup information and load store metadata."""
-    global _store_metadata
+    global _store_metadata, _prediction_logger
 
     logger.info("=" * 70)
     logger.info("Rossmann Sales Forecasting API Starting")
     logger.info("=" * 70)
     logger.info(f"MLflow Tracking URI: {MLFLOW_TRACKING_URI}")
     logger.info(f"Project Root: {PROJECT_ROOT}")
+
+    # Initialize prediction logger
+    try:
+        db_path = PROJECT_ROOT / "data" / "monitoring" / "predictions.db"
+        _prediction_logger = PredictionLogger(db_path)
+        logger.info(f"Prediction logger initialized at {db_path}")
+    except Exception as e:
+        logger.error(f"Failed to initialize prediction logger: {e}")
+        _prediction_logger = None
 
     # Load store metadata
     try:
@@ -310,6 +325,7 @@ async def predict(request: PredictionRequest):
     2. Validates input data
     3. Prepares features using the prediction pipeline
     4. Makes predictions
+    5. Logs predictions for monitoring
 
     Parameters
     ----------
@@ -321,6 +337,8 @@ async def predict(request: PredictionRequest):
     PredictionResponse
         Predicted sales values and metadata
     """
+    start_time = time.time()
+
     try:
         # Check store metadata is loaded
         if _store_metadata is None:
@@ -346,6 +364,26 @@ async def predict(request: PredictionRequest):
 
         # Step 3: Prepare prediction features using unified pipeline
         # This handles: merging store metadata, cleaning, feature engineering, and column selection
+        # Note: We need to get the full feature set BEFORE column selection for logging
+        from features.build_features import build_all_features
+
+        from data.make_dataset import basic_cleaning, merge_store_info
+
+        # Create a copy with dummy Sales/Customers for full feature generation
+        raw_df_with_dummy = raw_df.copy()
+        if "Sales" not in raw_df_with_dummy.columns:
+            raw_df_with_dummy["Sales"] = 0
+        if "Customers" not in raw_df_with_dummy.columns:
+            raw_df_with_dummy["Customers"] = 0
+
+        # Merge and clean data
+        merged_df = merge_store_info(raw_df_with_dummy, _store_metadata)
+        cleaned_df = basic_cleaning(merged_df)
+
+        # Engineer features (get FULL feature set for logging)
+        full_features = build_all_features(cleaned_df)
+
+        # Select model features (subset for prediction)
         model_input = prepare_prediction_data(raw_df, store_metadata=_store_metadata)
 
         logger.info(
@@ -361,7 +399,25 @@ async def predict(request: PredictionRequest):
             predictions.tolist() if hasattr(predictions, "tolist") else list(predictions)
         )
 
+        # Calculate response time
+        response_time_ms = (time.time() - start_time) * 1000
+
         logger.info(f"✓ Prediction complete: {len(predictions_list)} predictions generated")
+
+        # Step 5: Log predictions for monitoring (if logger available)
+        if _prediction_logger is not None:
+            try:
+                batch_id = _prediction_logger.log_predictions(
+                    raw_inputs=raw_df,
+                    features=full_features,
+                    predictions=predictions_list,
+                    model_version=version,
+                    model_stage=request.model_stage,
+                    response_time_ms=response_time_ms,
+                )
+                logger.info(f"✓ Predictions logged (batch_id={batch_id})")
+            except Exception as e:
+                logger.warning(f"Failed to log predictions: {e}")
 
         return PredictionResponse(
             predictions=predictions_list,

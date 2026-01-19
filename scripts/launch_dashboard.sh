@@ -14,6 +14,17 @@ NC='\033[0m' # No Color
 # Get the project root directory (parent of scripts/)
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 DEPLOYMENT_DIR="$PROJECT_ROOT/deployment"
+VENV_DIR="$PROJECT_ROOT/.venv"
+
+# Activate virtual environment
+if [ -d "$VENV_DIR" ]; then
+    source "$VENV_DIR/bin/activate"
+    echo -e "${GREEN}✓ Virtual environment activated${NC}"
+else
+    echo -e "${RED}❌ Virtual environment not found at $VENV_DIR${NC}"
+    echo -e "${RED}   Please create it with: uv venv${NC}"
+    exit 1
+fi
 
 echo ""
 echo -e "${BLUE}================================================${NC}"

@@ -124,6 +124,23 @@ lsof -ti:8000 | xargs kill -9  # Stop FastAPI
 # Streamlit: Ctrl+C (runs in foreground)
 ```
 
+### Monitoring Workflows
+
+```bash
+# Prepare reference data for drift detection (run once)
+python src/monitoring/prepare_reference_data.py
+
+# Generate drift detection report (run weekly/monthly)
+python src/monitoring/generate_reports.py --days 7   # Last 7 days
+python src/monitoring/generate_reports.py --days 30  # Last 30 days
+
+# View monitoring dashboard in Streamlit
+# Navigate to "📊 Monitoring" page in Streamlit UI
+
+# Query prediction database directly (advanced)
+sqlite3 data/monitoring/predictions.db "SELECT COUNT(*) FROM predictions;"
+```
+
 ### Running Individual Modules
 
 ```bash
@@ -281,9 +298,23 @@ python -m src.features.build_features
 - `Home.py`: Landing page with system status, model registry, and quick start guide
 - `pages/1_📈_Predictions.py`: Single and batch prediction interfaces
 - `pages/2_📚_Documentation.py`: API reference and integration examples
+- `pages/3_📊_Monitoring.py`: Prediction usage statistics and drift detection dashboard
 - `utils/api_client.py`: FastAPI client abstraction with error handling
 - `utils/validation.py`: Client-side input validation and CSV template generation
 - Multi-page app architecture with automatic navigation
+
+**Monitoring System** - Prediction Logging and Drift Detection
+
+- `deployment/api/prediction_logger.py`: SQLite-based prediction logging
+    - Logs predictions, key features (~10), and metadata to `data/monitoring/predictions.db`
+    - Integrated into `/predict` endpoint for automatic logging
+    - Supports querying by date range, model version, and batch ID
+- `src/monitoring/drift_detection.py`: Custom drift detection using Evidently AI framework
+    - Compares production predictions against training data reference
+    - Uses KS test for numerical features, Total Variation Distance for categorical features
+    - Monitors ~10 key features (promo, day_of_week, month, state_holiday, store_type, etc.)
+    - Generates drift summary with feature-level drift scores
+    - Flags dataset-level drift when >50% of features show drift
 
 **scripts/** - Automation Scripts
 
@@ -292,6 +323,28 @@ python -m src.features.build_features
 - `launch_streamlit.sh`: Standalone Streamlit launcher
 - `start_mlflow.sh`: MLflow tracking server launcher
 - Smart port detection, health check timeouts, and background process management
+
+### Monitoring Infrastructure
+
+The project implements a lightweight monitoring system for tracking predictions and detecting data drift:
+
+**Components**:
+
+- **Prediction Logging**: SQLite database (`data/monitoring/predictions.db`) logs all predictions with metadata
+- **Drift Detection**: Statistical comparison of production data vs. training data distributions
+- **Monitoring Dashboard**: Streamlit page showing usage statistics and drift analysis
+
+**Key Features**:
+
+- Logs ~10 key features per prediction (promo, day_of_week, month, store_type, competition_distance, etc.)
+- Statistical tests: Kolmogorov-Smirnov for numerical, Total Variation Distance for categorical
+- Drift thresholds: p-value \< 0.05 (KS test), TVD > 0.2 (categorical)
+- Dataset drift flagged when >50% of monitored features show drift
+- Reference data: Full training feature set (`data/processed/train_features.parquet`)
+
+**Access**: Navigate to "📊 Monitoring" page in Streamlit app after making predictions
+
+**Documentation**: See `docs/monitoring/` for complete monitoring documentation
 
 ### Configuration
 
@@ -317,6 +370,7 @@ python -m src.features.build_features
 - `test_data_processing.py`: Data loading, merging, cleaning, quality checks
 - `test_data_validation.py`: Great Expectations integration, schema validation
 - `test_features.py`: Feature engineering validation, time-series safety checks
+- `test_monitoring.py`: Prediction logging, drift detection, database operations
 - All tests use proper fixtures (`sample_train_data`, `sample_store_data`, `sample_features_data`)
 - Run with `pytest -v` for full test suite
 
@@ -375,6 +429,10 @@ python -m src.features.build_features
     - `fastapi.md`: API endpoints, feature pipeline, error handling
     - `streamlit.md`: UI features with screenshots (home, single/batch predictions)
     - `launcher.md`: Unified launcher process flow and troubleshooting
+- **Monitoring docs** (`docs/monitoring/`):
+    - `overview.md`: Monitoring introduction, components, design decisions, limitations
+    - `drift-detection.md`: Statistical methodology (KS test, TVD), feature monitoring, drift thresholds
+    - `dashboard.md`: Dashboard usage guide with screenshots
 - **API docs** (`docs/api/`): Auto-generated from code docstrings
 - **DataOps/ModelOps docs**: Getting started guides and best practices
 - Build with `mkdocs build`, serve with `mkdocs serve` (http://localhost:8000)

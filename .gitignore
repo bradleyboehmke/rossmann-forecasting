@@ -63,6 +63,7 @@ mlartifacts/
 # Monitoring
 monitoring/drift_reports/
 monitoring/performance_reports/
+data/monitoring/predictions.db
 
 # Test coverage
 .coverage

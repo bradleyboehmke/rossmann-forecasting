@@ -40,7 +40,7 @@ This deployment showcases:
 ## Architecture Overview
 
 ```mermaid
-flowchart TB
+flowchart BT
     subgraph Registry["MLflow Model Registry (Port 5000)"]
         MR[(Model Storage)]
         MV[Version Management]
