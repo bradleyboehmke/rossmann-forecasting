@@ -105,6 +105,8 @@ nav:
       - Overview: monitoring/overview.md
       - Drift Detection: monitoring/drift-detection.md
       - Dashboard Guide: monitoring/dashboard.md
+  - CI/CD:
+      - GitHub Actions: cicd/github-actions.md
   - API Reference:
       - Data: api/data.md
       - Features: api/features.md
