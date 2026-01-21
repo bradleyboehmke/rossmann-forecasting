@@ -1,16 +1,31 @@
-"""
-Feature engineering functions for the Rossmann forecasting project.
+"""Feature engineering functions for the Rossmann forecasting project.
+
+This module creates STANDARD/PROVEN features that are part of the DataOps workflow.
+These features have been validated as beneficial for the organization and are:
+- Automated in the dataops_workflow.sh script
+- Tested in tests/test_features.py
+- Always created for all modeling efforts
+
+Examples of standard features:
+- Calendar features: year, month, quarter, season, weekend flags
+- Temporal patterns: is_month_start, is_quarter_end
+- Business context: promo features, competition features
+- Historical patterns: lags and rolling statistics
+
+IMPORTANT: Model-specific transformations (scaling, normalization) or experimental
+feature engineering should be done separately in model training pipelines (ModelOps).
 
 CRITICAL: All lag and rolling features MUST use proper groupby to prevent data leakage.
 - Lag features: df.groupby("Store")["column"].shift(lag)
 - Rolling features: df.groupby("Store")["column"].rolling(window).agg()
 """
 
-import pandas as pd
-import numpy as np
-from pathlib import Path
-from typing import List, Dict, Any
 import sys
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+import pandas as pd
 
 # Add parent directory to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
@@ -22,8 +37,7 @@ logger = get_logger(__name__)
 
 
 def add_calendar_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add calendar-based features derived from Date.
+    """Add calendar-based features derived from Date.
 
     Features created:
     - Year, Month, Week, Day, DayOfMonth
@@ -46,38 +60,52 @@ def add_calendar_features(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     # Basic date components
-    df['Year'] = df['Date'].dt.year
-    df['Month'] = df['Date'].dt.month
-    df['Week'] = df['Date'].dt.isocalendar().week
-    df['Day'] = df['Date'].dt.day
-    df['DayOfMonth'] = df['Date'].dt.day
-    df['Quarter'] = df['Date'].dt.quarter
+    df["Year"] = df["Date"].dt.year
+    df["Month"] = df["Date"].dt.month
+    df["Week"] = df["Date"].dt.isocalendar().week
+    df["Day"] = df["Date"].dt.day
+    df["DayOfMonth"] = df["Date"].dt.day
+    df["Quarter"] = df["Date"].dt.quarter
 
     # Month flags
-    df['IsMonthStart'] = df['Date'].dt.is_month_start.astype('int8')
-    df['IsMonthEnd'] = df['Date'].dt.is_month_end.astype('int8')
-    df['IsQuarterStart'] = df['Date'].dt.is_quarter_start.astype('int8')
-    df['IsQuarterEnd'] = df['Date'].dt.is_quarter_end.astype('int8')
+    df["IsMonthStart"] = df["Date"].dt.is_month_start.astype("int8")
+    df["IsMonthEnd"] = df["Date"].dt.is_month_end.astype("int8")
+    df["IsQuarterStart"] = df["Date"].dt.is_quarter_start.astype("int8")
+    df["IsQuarterEnd"] = df["Date"].dt.is_quarter_end.astype("int8")
 
     # Weekend flag (DayOfWeek: 1=Mon, 7=Sun)
-    df['IsWeekend'] = (df['DayOfWeek'] >= 6).astype('int8')
+    df["IsWeekend"] = (df["DayOfWeek"] >= 6).astype("int8")
 
     # Season (meteorological)
     # Winter: 12, 1, 2
     # Spring: 3, 4, 5
     # Summer: 6, 7, 8
     # Fall: 9, 10, 11
-    df['Season'] = df['Month'].map({
-        12: 0, 1: 0, 2: 0,  # Winter
-        3: 1, 4: 1, 5: 1,   # Spring
-        6: 2, 7: 2, 8: 2,   # Summer
-        9: 3, 10: 3, 11: 3  # Fall
-    }).astype('int8')
+    df["Season"] = (
+        df["Month"]
+        .map(
+            {
+                12: 0,
+                1: 0,
+                2: 0,  # Winter
+                3: 1,
+                4: 1,
+                5: 1,  # Spring
+                6: 2,
+                7: 2,
+                8: 2,  # Summer
+                9: 3,
+                10: 3,
+                11: 3,  # Fall
+            }
+        )
+        .astype("int8")
+    )
 
     # Convert to memory-efficient dtypes
-    int_cols = ['Year', 'Month', 'Week', 'Day', 'DayOfMonth', 'Quarter']
+    int_cols = ["Year", "Month", "Week", "Day", "DayOfMonth", "Quarter"]
     for col in int_cols:
-        df[col] = df[col].astype('int16')
+        df[col] = df[col].astype("int16")
 
     logger.info(f"Added {11} calendar features")
 
@@ -85,8 +113,7 @@ def add_calendar_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_promo_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add promotion-related features.
+    """Add promotion-related features.
 
     Features created:
     - Promo2Active: Whether Promo2 is active in current month
@@ -109,49 +136,49 @@ def add_promo_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Promo2 active in current month
     # PromoInterval format: "Jan,Apr,Jul,Oct" or "Feb,May,Aug,Nov" or "Mar,Jun,Sept,Dec"
-    month_abbr = df['Date'].dt.strftime('%b')
+    month_abbr = df["Date"].dt.strftime("%b")
 
     # Check if current month is in PromoInterval
     def is_promo2_active(row):
-        if pd.isna(row['PromoInterval']) or row['PromoInterval'] == '' or row['Promo2'] == 0:
+        if pd.isna(row["PromoInterval"]) or row["PromoInterval"] == "" or row["Promo2"] == 0:
             return 0
         # Handle "Sept" vs "Sep" inconsistency
-        promo_months = row['PromoInterval'].replace('Sept', 'Sep')
-        current_month = row['Month_Abbr'].replace('Sep', 'Sep')
+        promo_months = row["PromoInterval"].replace("Sept", "Sep")
+        current_month = row["Month_Abbr"].replace("Sep", "Sep")
         return 1 if current_month in promo_months else 0
 
-    df['Month_Abbr'] = month_abbr
-    df['Promo2Active'] = df.apply(is_promo2_active, axis=1).astype('int8')
-    df = df.drop('Month_Abbr', axis=1)
+    df["Month_Abbr"] = month_abbr
+    df["Promo2Active"] = df.apply(is_promo2_active, axis=1).astype("int8")
+    df = df.drop("Month_Abbr", axis=1)
 
     # Promo2 duration (days since Promo2 started)
     def calc_promo2_duration(row):
-        if row['Promo2'] == 0 or row['Promo2SinceYear'] == 0:
+        if row["Promo2"] == 0 or row["Promo2SinceYear"] == 0:
             return 0
 
         # Convert Promo2SinceWeek and Promo2SinceYear to date
         try:
             promo2_start = pd.to_datetime(
                 f"{int(row['Promo2SinceYear'])}-W{int(row['Promo2SinceWeek'])}-1",
-                format='%Y-W%W-%w'
+                format="%Y-W%W-%w",
             )
-            duration = (row['Date'] - promo2_start).days
+            duration = (row["Date"] - promo2_start).days
             return max(0, duration)  # Return 0 if negative
-        except:
+        except Exception:
             return 0
 
-    df['Promo2Duration'] = df.apply(calc_promo2_duration, axis=1).astype('int32')
+    df["Promo2Duration"] = df.apply(calc_promo2_duration, axis=1).astype("int32")
 
     # One-hot encode PromoInterval
     # Common patterns: "Jan,Apr,Jul,Oct", "Feb,May,Aug,Nov", "Mar,Jun,Sept,Dec"
     promo_patterns = {
-        'Jan,Apr,Jul,Oct': 'PromoInterval_JAJO',
-        'Feb,May,Aug,Nov': 'PromoInterval_FMAN',
-        'Mar,Jun,Sept,Dec': 'PromoInterval_MJSD'
+        "Jan,Apr,Jul,Oct": "PromoInterval_JAJO",
+        "Feb,May,Aug,Nov": "PromoInterval_FMAN",
+        "Mar,Jun,Sept,Dec": "PromoInterval_MJSD",
     }
 
     for pattern, col_name in promo_patterns.items():
-        df[col_name] = (df['PromoInterval'] == pattern).astype('int8')
+        df[col_name] = (df["PromoInterval"] == pattern).astype("int8")
 
     logger.info(f"Added {5} promotion features")
 
@@ -159,8 +186,7 @@ def add_promo_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_competition_features(df: pd.DataFrame) -> pd.DataFrame:
-    """
-    Add competition-related features.
+    """Add competition-related features.
 
     Features created:
     - CompetitionDistance_log: Log-scaled competition distance
@@ -183,26 +209,26 @@ def add_competition_features(df: pd.DataFrame) -> pd.DataFrame:
 
     # Log-scaled competition distance
     # Use log1p to handle zeros and avoid -inf
-    df['CompetitionDistance_log'] = np.log1p(df['CompetitionDistance']).astype('float32')
+    df["CompetitionDistance_log"] = np.log1p(df["CompetitionDistance"]).astype("float32")
 
     # Has competition flag (distance < 100000, which was our fill value)
-    df['HasCompetition'] = (df['CompetitionDistance'] < 100000).astype('int8')
+    df["HasCompetition"] = (df["CompetitionDistance"] < 100000).astype("int8")
 
     # Competition age (days since competition opened)
     def calc_competition_age(row):
-        if row['CompetitionOpenSinceYear'] == 0 or row['CompetitionOpenSinceMonth'] == 0:
+        if row["CompetitionOpenSinceYear"] == 0 or row["CompetitionOpenSinceMonth"] == 0:
             return 0
 
         try:
             comp_open_date = pd.to_datetime(
                 f"{int(row['CompetitionOpenSinceYear'])}-{int(row['CompetitionOpenSinceMonth'])}-01"
             )
-            age = (row['Date'] - comp_open_date).days
+            age = (row["Date"] - comp_open_date).days
             return max(0, age)  # Return 0 if negative
-        except:
+        except Exception:
             return 0
 
-    df['CompetitionAge'] = df.apply(calc_competition_age, axis=1).astype('int32')
+    df["CompetitionAge"] = df.apply(calc_competition_age, axis=1).astype("int32")
 
     logger.info(f"Added {3} competition features")
 
@@ -210,12 +236,9 @@ def add_competition_features(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def add_lag_features(
-    df: pd.DataFrame,
-    lags: List[int] = [1, 7, 14, 28],
-    target_col: str = 'Sales'
+    df: pd.DataFrame, lags: list[int] | None = None, target_col: str = "Sales"
 ) -> pd.DataFrame:
-    """
-    Add lag features at the store level.
+    """Add lag features at the store level.
 
     CRITICAL: Uses groupby("Store").shift(lag) to prevent data leakage.
 
@@ -236,14 +259,17 @@ def add_lag_features(
     pd.DataFrame
         Dataframe with added lag features
     """
+    if lags is None:
+        lags = [1, 7, 14, 28]
+
     logger.info(f"Adding lag features for {target_col} with lags: {lags}")
 
     df = df.copy()
 
     # CRITICAL: Must group by Store to prevent leakage across stores
     for lag in lags:
-        col_name = f'{target_col}_Lag_{lag}'
-        df[col_name] = df.groupby('Store')[target_col].shift(lag).astype('float32')
+        col_name = f"{target_col}_Lag_{lag}"
+        df[col_name] = df.groupby("Store")[target_col].shift(lag).astype("float32")
         logger.info(f"  Created {col_name}")
 
     logger.info(f"Added {len(lags)} lag features")
@@ -252,12 +278,9 @@ def add_lag_features(
 
 
 def add_rolling_features(
-    df: pd.DataFrame,
-    windows: List[int] = [7, 14, 28, 60],
-    target_col: str = 'Sales'
+    df: pd.DataFrame, windows: list[int] | None = None, target_col: str = "Sales"
 ) -> pd.DataFrame:
-    """
-    Add rolling window features at the store level.
+    """Add rolling window features at the store level.
 
     CRITICAL: Uses groupby("Store").rolling(window) to prevent data leakage.
 
@@ -279,6 +302,9 @@ def add_rolling_features(
     pd.DataFrame
         Dataframe with added rolling features
     """
+    if windows is None:
+        windows = [7, 14, 28, 60]
+
     logger.info(f"Adding rolling features for {target_col} with windows: {windows}")
 
     df = df.copy()
@@ -286,24 +312,24 @@ def add_rolling_features(
     # CRITICAL: Must group by Store to prevent leakage across stores
     for window in windows:
         # Rolling mean
-        col_mean = f'{target_col}_RollingMean_{window}'
+        col_mean = f"{target_col}_RollingMean_{window}"
         df[col_mean] = (
-            df.groupby('Store')[target_col]
+            df.groupby("Store")[target_col]
             .rolling(window=window, min_periods=1)
             .mean()
             .reset_index(level=0, drop=True)
-            .astype('float32')
+            .astype("float32")
         )
         logger.info(f"  Created {col_mean}")
 
         # Rolling std
-        col_std = f'{target_col}_RollingStd_{window}'
+        col_std = f"{target_col}_RollingStd_{window}"
         df[col_std] = (
-            df.groupby('Store')[target_col]
+            df.groupby("Store")[target_col]
             .rolling(window=window, min_periods=1)
             .std()
             .reset_index(level=0, drop=True)
-            .astype('float32')
+            .astype("float32")
         )
         logger.info(f"  Created {col_std}")
 
@@ -312,12 +338,8 @@ def add_rolling_features(
     return df
 
 
-def build_all_features(
-    df: pd.DataFrame,
-    config: Dict[str, Any] = None
-) -> pd.DataFrame:
-    """
-    Orchestrate all feature engineering steps.
+def build_all_features(df: pd.DataFrame, config: dict[str, Any] = None) -> pd.DataFrame:
+    """Orchestrate all feature engineering steps.
 
     Parameters
     ----------
@@ -336,17 +358,17 @@ def build_all_features(
     pd.DataFrame
         Dataframe with all engineered features
     """
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Starting feature engineering")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # Default config
     if config is None:
         config = {
-            'lags': [1, 7, 14, 28],
-            'rolling_windows': [7, 14, 28, 60],
-            'include_promo_features': True,
-            'include_competition_features': True
+            "lags": [1, 7, 14, 28],
+            "rolling_windows": [7, 14, 28, 60],
+            "include_promo_features": True,
+            "include_competition_features": True,
         }
 
     df = df.copy()
@@ -354,73 +376,71 @@ def build_all_features(
 
     # Ensure data is sorted by Store and Date
     logger.info("Ensuring data is sorted by Store and Date")
-    df = df.sort_values(['Store', 'Date']).reset_index(drop=True)
+    df = df.sort_values(["Store", "Date"]).reset_index(drop=True)
 
     # Add calendar features
     df = add_calendar_features(df)
 
     # Add promotion features
-    if config.get('include_promo_features', True):
+    if config.get("include_promo_features", True):
         df = add_promo_features(df)
     else:
         logger.info("Skipping promotion features (disabled in config)")
 
     # Add competition features
-    if config.get('include_competition_features', True):
+    if config.get("include_competition_features", True):
         df = add_competition_features(df)
     else:
         logger.info("Skipping competition features (disabled in config)")
 
     # Add lag features
-    lags = config.get('lags', [1, 7, 14, 28])
+    lags = config.get("lags", [1, 7, 14, 28])
     df = add_lag_features(df, lags=lags)
 
     # Add rolling features
-    windows = config.get('rolling_windows', [7, 14, 28, 60])
+    windows = config.get("rolling_windows", [7, 14, 28, 60])
     df = add_rolling_features(df, windows=windows)
 
     final_cols = len(df.columns)
     added_cols = final_cols - initial_cols
 
-    logger.info("="*60)
-    logger.info(f"Feature engineering complete!")
+    logger.info("=" * 60)
+    logger.info("Feature engineering complete!")
     logger.info(f"Added {added_cols} new features")
     logger.info(f"Total columns: {final_cols}")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     return df
 
 
 def main():
-    """
-    Main function to run the feature engineering pipeline.
-    """
+    """Main function to run the feature engineering pipeline."""
     import yaml
 
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Starting feature engineering pipeline")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # Load configuration
-    config_path = Path('config/params.yaml')
+    config_path = Path("config/params.yaml")
     if config_path.exists():
-        with open(config_path, 'r') as f:
+        with open(config_path) as f:
             params = yaml.safe_load(f)
-        feature_config = params.get('features', {})
+        feature_config = params.get("features", {})
     else:
         logger.warning("Config file not found, using defaults")
         feature_config = None
 
     # Load cleaned data
     logger.info("Loading cleaned data from data/processed/train_clean.parquet")
-    df = read_parquet('data/processed/train_clean.parquet')
+    df = read_parquet("data/processed/train_clean.parquet")
     logger.info(f"Loaded {len(df):,} rows, {len(df.columns)} columns")
 
     # Build features
     df_featured = build_all_features(df, config=feature_config)
 
     # Save featured data
-    output_path = 'data/processed/train_features.parquet'
+    output_path = "data/processed/train_features.parquet"
     logger.info(f"Saving featured data to {output_path}")
     save_parquet(df_featured, output_path)
 
@@ -428,9 +448,9 @@ def main():
     file_size_mb = Path(output_path).stat().st_size / (1024 * 1024)
     logger.info(f"Saved {len(df_featured):,} rows to {output_path} ({file_size_mb:.2f} MB)")
 
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Feature engineering pipeline complete!")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
 
 if __name__ == "__main__":

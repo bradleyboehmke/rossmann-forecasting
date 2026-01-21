@@ -1,18 +1,14 @@
-"""
-Evaluation metrics for the Rossmann forecasting project.
-"""
+"""Evaluation metrics for the Rossmann forecasting project."""
+
+from typing import Union
 
 import numpy as np
-from typing import Union
 
 
 def rmspe(
-    y_true: Union[np.ndarray, list],
-    y_pred: Union[np.ndarray, list],
-    ignore_zero_sales: bool = True
+    y_true: Union[np.ndarray, list], y_pred: Union[np.ndarray, list], ignore_zero_sales: bool = True
 ) -> float:
-    """
-    Calculate Root Mean Square Percentage Error (RMSPE).
+    """Calculate Root Mean Square Percentage Error (RMSPE).
 
     This is the primary evaluation metric for the Rossmann competition.
     Observations where Sales = 0 are ignored by default.
@@ -45,12 +41,8 @@ def rmspe(
     return np.sqrt(np.mean(np.square((y_true[mask] - y_pred[mask]) / y_true[mask])))
 
 
-def rmse(
-    y_true: Union[np.ndarray, list],
-    y_pred: Union[np.ndarray, list]
-) -> float:
-    """
-    Calculate Root Mean Square Error (RMSE).
+def rmse(y_true: Union[np.ndarray, list], y_pred: Union[np.ndarray, list]) -> float:
+    """Calculate Root Mean Square Error (RMSE).
 
     Parameters
     ----------
@@ -70,12 +62,8 @@ def rmse(
     return np.sqrt(np.mean(np.square(y_true - y_pred)))
 
 
-def mae(
-    y_true: Union[np.ndarray, list],
-    y_pred: Union[np.ndarray, list]
-) -> float:
-    """
-    Calculate Mean Absolute Error (MAE).
+def mae(y_true: Union[np.ndarray, list], y_pred: Union[np.ndarray, list]) -> float:
+    """Calculate Mean Absolute Error (MAE).
 
     Parameters
     ----------
@@ -96,12 +84,9 @@ def mae(
 
 
 def mape(
-    y_true: Union[np.ndarray, list],
-    y_pred: Union[np.ndarray, list],
-    ignore_zero_sales: bool = True
+    y_true: Union[np.ndarray, list], y_pred: Union[np.ndarray, list], ignore_zero_sales: bool = True
 ) -> float:
-    """
-    Calculate Mean Absolute Percentage Error (MAPE).
+    """Calculate Mean Absolute Percentage Error (MAPE).
 
     Parameters
     ----------

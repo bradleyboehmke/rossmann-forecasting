@@ -1,0 +1,82 @@
+{
+  "data_asset_type": "Dataset",
+  "expectation_suite_name": "raw_store_suite",
+  "expectations": [
+    {
+      "expectation_type": "expect_table_row_count_to_be_between",
+      "kwargs": {
+        "min_value": 1000,
+        "max_value": 1200
+      },
+      "meta": {
+        "notes": "Store data should have ~1115 stores"
+      }
+    },
+    {
+      "expectation_type": "expect_table_columns_to_match_ordered_list",
+      "kwargs": {
+        "column_list": ["Store", "StoreType", "Assortment", "CompetitionDistance", "CompetitionOpenSinceMonth", "CompetitionOpenSinceYear", "Promo2", "Promo2SinceWeek", "Promo2SinceYear", "PromoInterval"]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_not_be_null",
+      "kwargs": {
+        "column": "Store"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_unique",
+      "kwargs": {
+        "column": "Store"
+      },
+      "meta": {
+        "notes": "Each store should appear only once"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "StoreType",
+        "value_set": ["a", "b", "c", "d"]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "Assortment",
+        "value_set": ["a", "b", "c"]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "CompetitionDistance",
+        "min_value": 0,
+        "max_value": 100000,
+        "mostly": 0.7
+      },
+      "meta": {
+        "notes": "Competition distance can be missing for some stores"
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_in_set",
+      "kwargs": {
+        "column": "Promo2",
+        "value_set": [0, 1]
+      }
+    },
+    {
+      "expectation_type": "expect_column_values_to_be_between",
+      "kwargs": {
+        "column": "Store",
+        "min_value": 1,
+        "max_value": 1200
+      }
+    }
+  ],
+  "meta": {
+    "great_expectations_version": "0.18.0",
+    "notes": "Validation suite for raw store.csv data"
+  }
+}

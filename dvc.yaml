@@ -1,0 +1,43 @@
+stages:
+  # Data processing stages (data files tracked separately with dvc add)
+  prepare_data:
+    cmd: python -m src.data.make_dataset
+    deps:
+      - src/data/make_dataset.py
+      - data/raw/train.csv
+      - data/raw/store.csv
+    params:
+      - config/params.yaml:
+          - data.raw_dir
+          - data.processed_dir
+
+  validate_raw_data:
+    cmd: python src/data/validate_data.py --stage raw
+    deps:
+      - src/data/validate_data.py
+      - data/raw/train.csv
+      - data/raw/store.csv
+
+  build_features:
+    cmd: python -m src.features.build_features
+    deps:
+      - src/features/build_features.py
+      - data/processed/train_clean.parquet
+    params:
+      - config/params.yaml:
+          - features.lags
+          - features.rolling_windows
+
+  validate_features:
+    cmd: python src/data/validate_data.py --stage features
+    deps:
+      - src/data/validate_data.py
+      - data/processed/train_features.parquet
+
+  # Model training stages (commented out - models tracked separately)
+  # Uncomment when ready to integrate model training into pipeline
+  # train_baseline:
+  #   cmd: python -m src.models.train_baselines
+  #   deps:
+  #     - src/models/train_baselines.py
+  #     - data/processed/train_features.parquet

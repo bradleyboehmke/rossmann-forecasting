@@ -1,0 +1,51 @@
+{
+  "lightgbm": {
+    "hyperparameters": {
+      "reg_lambda": 0.5548869964298921,
+      "max_depth": 14,
+      "learning_rate": 0.09907767405402476,
+      "bagging_freq": 9,
+      "feature_fraction": 0.7638691330886829,
+      "bagging_fraction": 0.846994779649261,
+      "reg_alpha": 0.874002054470144,
+      "num_leaves": 112,
+      "min_child_samples": 47
+    },
+    "best_rmspe": 0.12647224038805377,
+    "run_id": "cb4e1c94c6d343ad9df5c4e790b27c8d"
+  },
+  "xgboost": {
+    "hyperparameters": {
+      "reg_lambda": 0.2629301632630104,
+      "max_depth": 15,
+      "learning_rate": 0.030794654216388606,
+      "min_child_weight": 10,
+      "gamma": 0.35822958859053944,
+      "colsample_bytree": 0.855766511682563,
+      "reg_alpha": 0.4844786966814199,
+      "subsample": 0.7030572357656915
+    },
+    "best_rmspe": 0.12182958424091339,
+    "run_id": "8427167be3f6435e899a67b2b349b567"
+  },
+  "catboost": {
+    "hyperparameters": {
+      "learning_rate": 0.060279781584468055,
+      "bagging_temperature": 0.6628074422804099,
+      "random_strength": 0.07720203612333576,
+      "depth": 10,
+      "border_count": 226,
+      "l2_leaf_reg": 5.843952578300897
+    },
+    "best_rmspe": 0.12998103857627044,
+    "run_id": "ea442bdce609459fbac2a44dadddc5b9"
+  },
+  "metadata": {
+    "source": "optuna_hyperparameter_tuning",
+    "n_trials_per_model": 50,
+    "cv_folds": 5,
+    "optimization_metric": "rmspe",
+    "best_model": "xgboost",
+    "best_rmspe": 0.12182958424091339
+  }
+}

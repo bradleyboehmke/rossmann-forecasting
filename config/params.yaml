@@ -64,3 +64,14 @@ ensemble:
   method: weighted  # 'weighted' or 'stacked'
   meta_model: ridge  # 'ridge' or 'lightgbm' (for stacked)
   optimize_weights: true
+
+mlflow:
+  tracking_uri: ./mlruns
+  experiment_name: rossmann-forecasting
+  artifact_location: ./mlartifacts
+  default_artifact_root: ./mlartifacts
+  backend_store_uri: ./mlruns
+  registry_uri: ./mlruns  # Model registry location
+  server:
+    host: 127.0.0.1
+    port: 5000
