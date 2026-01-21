@@ -14,7 +14,11 @@ The feature engineering pipeline creates 32+ standard features organized into ca
 
 ## Module Reference
 
-::: src.features.build_features options: show_source: true heading_level: 3 show_root_heading: false
+::: src.features.build_features
+    options:
+      show_source: true
+      heading_level: 3
+      show_root_heading: false
 
 ## Usage Examples
 

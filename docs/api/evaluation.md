@@ -15,11 +15,19 @@ The evaluation framework provides:
 
 ### Cross-Validation
 
-::: src.evaluation.cv options: show_source: true heading_level: 4 show_root_heading: false
+::: src.evaluation.cv
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ### Metrics
 
-::: src.evaluation.metrics options: show_source: true heading_level: 4 show_root_heading: false
+::: src.evaluation.metrics
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ## Usage Examples
 

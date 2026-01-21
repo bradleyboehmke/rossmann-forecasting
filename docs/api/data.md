@@ -13,7 +13,11 @@ The data processing pipeline:
 
 ## Module Reference
 
-::: src.data.make_dataset options: show_source: true heading_level: 3 show_root_heading: false
+::: src.data.make_dataset
+    options:
+      show_source: true
+      heading_level: 3
+      show_root_heading: false
 
 ## Usage Examples
 

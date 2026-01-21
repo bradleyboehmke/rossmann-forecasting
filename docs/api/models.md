@@ -16,23 +16,43 @@ All models are evaluated using **RMSPE** (Root Mean Square Percentage Error) wit
 
 ### Ensemble Model
 
-::: src.models.ensemble options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.ensemble
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ### Model Registry
 
-::: src.models.model_registry options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.model_registry
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ### Training Pipeline
 
-::: src.models.train_ensemble options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.train_ensemble
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ### Model Validation
 
-::: src.models.validate_model options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.validate_model
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ### Inference Pipeline
 
-::: src.models.predict options: show_source: true heading_level: 4 show_root_heading: false
+::: src.models.predict
+    options:
+      show_source: true
+      heading_level: 4
+      show_root_heading: false
 
 ## Usage Examples
 
