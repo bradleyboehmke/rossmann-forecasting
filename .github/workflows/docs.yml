@@ -50,6 +50,7 @@ jobs:
       - name: Build documentation
         run: |
           source .venv/bin/activate
+          export PYTHONPATH="${PYTHONPATH}:${PWD}"
           mkdocs build --strict
 
       - name: Setup Pages
