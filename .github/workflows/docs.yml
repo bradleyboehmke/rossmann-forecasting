@@ -45,12 +45,13 @@ jobs:
       - name: Install dependencies
         run: |
           uv venv
+          # Install all dependencies including main package dependencies
+          uv pip install -e "."
           uv pip install -e ".[dev,docs]"
 
       - name: Build documentation
         run: |
           source .venv/bin/activate
-          export PYTHONPATH="${PYTHONPATH}:${PWD}"
           mkdocs build --strict
 
       - name: Setup Pages
