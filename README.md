@@ -1,23 +1,26 @@
-# Rossmann Sales Forecasting: Spec-Driven Data Science with Agentic Coding
+# Rossmann Sales Forecasting: Mature Research Repository (Stage 2)
 
-A demonstration of how specification-driven data science combined with AI-assisted development can achieve competitive results on an established Kaggle challenge. This project forecasts daily sales for 3,000+ Rossmann stores across Europe using rigorous time-series validation and advanced ensemble modeling.
+An example of what a **mature research repository** looks like in the progression from exploratory notebooks to production ML systems. This project demonstrates research-grade organization, methodology, and documentation for a Kaggle sales forecasting challenge, achieving competitive results while maintaining reproducibility and code quality.
 
 ## Purpose
 
-This analysis demonstrates that:
-1. **Specification-driven development** with clear requirements and phased implementation can systematically approach complex ML problems
-2. **Agentic coding tools** (Claude Code) can accelerate development while maintaining code quality and best practices
-3. **Rigorous methodology** (time-series CV, proper feature engineering, ensemble methods) can achieve strong performance even without extensive hyperparameter tuning
+This repository serves as **Stage 2** in the maturity progression for data science projects:
 
-**The entire project was driven by a comprehensive specification** ([`spec-rossmann-forecasting.md`](spec-rossmann-forecasting.md)) that defined:
-- Success criteria (RMSPE < 0.09856, top 50 target)
-- Phased implementation strategy (Phase 0 → Phase 5)
-- Required feature engineering approaches
-- Time-series validation methodology
-- Model exploration plan
-- Data handling requirements
+**Stage 1** (Early Research): Exploratory notebooks with ad-hoc analysis
+**Stage 2** (Mature Research): ← *You are here*
+**Stage 3** (Production): MLOps infrastructure with automated pipelines
 
-This spec-first approach enabled Claude Code to systematically implement each phase without rework, resulting in a production-ready ensemble model achieving top 100 performance in a structured end-to-end workflow from raw data to final predictions.
+### What Makes This "Mature Research"
+
+This repository demonstrates mature research practices through:
+
+1. **Structured Organization**: Modular code (`src/`), sequential notebooks, separate data/outputs/config directories
+2. **Rigorous Methodology**: Time-series validation, proper train/validation splits, systematic feature engineering
+3. **Reproducibility**: Clear documentation, versioned configurations, reusable modules
+4. **Quality Standards**: Comprehensive logging, artifact management, performance tracking
+5. **Research Documentation**: Detailed analysis notebooks, methodology notes, performance summaries
+
+Unlike early-stage exploration, this repository is organized for collaboration, reproducibility, and systematic experimentation. Unlike production systems (Stage 3), it prioritizes research iteration over deployment automation.
 
 ## Final Results
 
@@ -336,10 +339,11 @@ The project uses the [Kaggle Rossmann Store Sales](https://www.kaggle.com/c/ross
 
 ## Citation
 
-If you use this project structure or methodology, please cite:
+If you use this project structure or methodology as an example, please cite:
 
 ```
-Rossmann Sales Forecasting: Spec-Driven Data Science with Agentic Coding
+Rossmann Sales Forecasting: Mature Research Repository Example (Stage 2)
+Branch: 2-research-mature
 https://github.com/bradleyboehmke/rossmann-forecasting
 ```
 
@@ -347,4 +351,4 @@ Original Kaggle competition: [Rossmann Store Sales](https://www.kaggle.com/c/ros
 
 ---
 
-**Status**: ✅ Complete - Production-ready ensemble model achieving top 100 performance
+**Status**: ✅ Complete - Research-grade repository with competitive performance (top 100)
