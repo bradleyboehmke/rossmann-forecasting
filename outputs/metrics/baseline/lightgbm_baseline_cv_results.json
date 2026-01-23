@@ -1,115 +1,13 @@
 {
   "model_name": "LightGBM_Baseline",
-  "metric": "RMSPE",
   "fold_scores": [
-    0.15793442863457796,
-    0.16930163620333114,
-    0.13174101103644598,
-    0.12558738496350827,
-    0.11980510565902154
+    0.1587185091822198,
+    0.16799063559287822,
+    0.14269580273964902,
+    0.13363213461659743,
+    0.12226027129895267
   ],
-  "mean_score": 0.14087391329937698,
-  "std_score": 0.01928823019719795,
-  "fold_results": [
-    {
-      "fold": 1,
-      "score": 0.15793442863457796,
-      "train_size": 312396,
-      "val_size": 38761,
-      "best_iteration": 386,
-      "train_time": 4.296972036361694
-    },
-    {
-      "fold": 2,
-      "score": 0.16930163620333114,
-      "train_size": 351157,
-      "val_size": 40164,
-      "best_iteration": 660,
-      "train_time": 6.8920488357543945
-    },
-    {
-      "fold": 3,
-      "score": 0.13174101103644598,
-      "train_size": 391321,
-      "val_size": 37018,
-      "best_iteration": 146,
-      "train_time": 2.3196041584014893
-    },
-    {
-      "fold": 4,
-      "score": 0.12558738496350827,
-      "train_size": 428339,
-      "val_size": 38108,
-      "best_iteration": 997,
-      "train_time": 9.94027590751648
-    },
-    {
-      "fold": 5,
-      "score": 0.11980510565902154,
-      "train_size": 466447,
-      "val_size": 34985,
-      "best_iteration": 432,
-      "train_time": 5.370938301086426
-    }
-  ],
-  "params": {
-    "objective": "regression",
-    "metric": "rmse",
-    "boosting_type": "gbdt",
-    "num_leaves": 31,
-    "learning_rate": 0.05,
-    "feature_fraction": 0.9,
-    "bagging_fraction": 0.8,
-    "bagging_freq": 5,
-    "verbose": -1,
-    "seed": 42
-  },
-  "features": [
-    "DayOfWeek",
-    "Open",
-    "Promo",
-    "StateHoliday",
-    "SchoolHoliday",
-    "StoreType",
-    "Assortment",
-    "CompetitionDistance",
-    "CompetitionOpenSinceMonth",
-    "CompetitionOpenSinceYear",
-    "Promo2",
-    "Promo2SinceWeek",
-    "Promo2SinceYear",
-    "PromoInterval",
-    "Year",
-    "Month",
-    "Week",
-    "Day",
-    "DayOfMonth",
-    "Quarter",
-    "IsMonthStart",
-    "IsMonthEnd",
-    "IsQuarterStart",
-    "IsQuarterEnd",
-    "IsWeekend",
-    "Season",
-    "Promo2Active",
-    "Promo2Duration",
-    "PromoInterval_JAJO",
-    "PromoInterval_FMAN",
-    "PromoInterval_MJSD",
-    "CompetitionDistance_log",
-    "HasCompetition",
-    "CompetitionAge",
-    "Sales_Lag_1",
-    "Sales_Lag_7",
-    "Sales_Lag_14",
-    "Sales_Lag_28",
-    "Sales_RollingMean_7",
-    "Sales_RollingStd_7",
-    "Sales_RollingMean_14",
-    "Sales_RollingStd_14",
-    "Sales_RollingMean_28",
-    "Sales_RollingStd_28",
-    "Sales_RollingMean_60",
-    "Sales_RollingStd_60"
-  ]
+  "mean_score": 0.14505947068605943,
+  "std_score": 0.016543168288581683,
+  "timestamp": "2026-01-23T12:36:02.124834"
 }
